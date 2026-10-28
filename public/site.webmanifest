@@ -1,0 +1,15 @@
+{
+  "name": "Victors Portfolio",
+  "short_name": "Victors",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#3A2F5C",
+  "background_color": "#E8DED6",
+  "display": "standalone"
+}
