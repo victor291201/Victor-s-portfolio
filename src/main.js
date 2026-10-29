@@ -18,6 +18,9 @@ import {
   MODEL_PATH,
   UNBAKED_CAMERA,
   UNBAKED_LIGHTS,
+  UNBAKED_PAN_BOUNDS,
+  UNBAKED_ORBIT_LIMITS,
+  UI_PALETTE,
 } from "./config.js";
 import {
   DEFAULT_LANGUAGE,
@@ -242,7 +245,7 @@ const sizes = {
 };
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color("#D9CAD1");
+scene.background = new THREE.Color(UI_PALETTE.periwinkle);
 
 const camera = new THREE.PerspectiveCamera(
   35,
@@ -267,12 +270,12 @@ if (!USE_BAKED_TEXTURES) {
   const ambientLight = new THREE.AmbientLight(0xffffff, day.ambient);
   const hemisphereLight = new THREE.HemisphereLight(
     0xffffff,
-    0x6b5b6e,
+    UI_PALETTE.slate,
     day.hemisphere
   );
 
-  const sunLight = new THREE.DirectionalLight(0xfff1e0, day.sun);
-  sunLight.position.set(18, 30, 12);
+  const sunLight = new THREE.DirectionalLight(UNBAKED_LIGHTS.sunColor, day.sun);
+  sunLight.position.fromArray(UNBAKED_LIGHTS.sunPosition);
   sunLight.target.position.set(0, 0, 0);
   sunLight.castShadow = true;
   sunLight.shadow.mapSize.set(2048, 2048);
@@ -299,7 +302,9 @@ if (!USE_BAKED_TEXTURES) {
   scene.add(ambientLight, hemisphereLight, sunLight, sunLight.target, lampLight);
 
   scene.background = new THREE.Color(day.background);
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  // Neutral tone mapping preserva mejor los colores fríos de la paleta;
+  // ACES viraba los lavandas hacia un gris rosado.
+  renderer.toneMapping = THREE.NeutralToneMapping;
   renderer.toneMappingExposure = 1.1;
 
   unbakedLighting = {
@@ -351,7 +356,385 @@ if (USE_BAKED_TEXTURES) {
 } else {
   camera.position.fromArray(UNBAKED_CAMERA.position);
   controls.target.fromArray(UNBAKED_CAMERA.target);
-  controls.maxDistance = 70;
+  controls.minDistance = UNBAKED_ORBIT_LIMITS.minDistance;
+  controls.maxDistance = UNBAKED_ORBIT_LIMITS.maxDistance;
+  controls.minPolarAngle = UNBAKED_ORBIT_LIMITS.minPolarAngle;
+  controls.maxPolarAngle = UNBAKED_ORBIT_LIMITS.maxPolarAngle;
+  controls.minAzimuthAngle = UNBAKED_ORBIT_LIMITS.minAzimuthAngle;
+  controls.maxAzimuthAngle = UNBAKED_ORBIT_LIMITS.maxAzimuthAngle;
+  controls.minPan.fromArray(UNBAKED_PAN_BOUNDS.min);
+  controls.maxPan.fromArray(UNBAKED_PAN_BOUNDS.max);
+}
+
+let cameraDebugUpdate = null;
+
+const setupCameraDebug = () => {
+  const initialPosition = camera.position.clone();
+  const initialTarget = controls.target.clone();
+  const defaultLimits = {
+    minDistance: controls.minDistance,
+    maxDistance: controls.maxDistance,
+    minPolarAngle: controls.minPolarAngle,
+    maxPolarAngle: controls.maxPolarAngle,
+    minAzimuthAngle: controls.minAzimuthAngle,
+    maxAzimuthAngle: controls.maxAzimuthAngle,
+    minPan: controls.minPan.clone(),
+    maxPan: controls.maxPan.clone(),
+  };
+
+  const style = document.createElement("style");
+  style.textContent = `
+    .camera-debug {
+      position: fixed;
+      top: 84px;
+      left: 12px;
+      z-index: 9999;
+      width: 280px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: rgba(18, 41, 95, 0.92);
+      color: rgb(173, 180, 228);
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      line-height: 1.3;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      user-select: none;
+    }
+    .camera-debug .cd-title {
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: rgb(159, 165, 213);
+    }
+    .camera-debug .cd-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .camera-debug .cd-group {
+      margin-bottom: 10px;
+    }
+    .camera-debug .cd-group-title {
+      margin-bottom: 4px;
+      font-weight: 600;
+      color: rgb(159, 165, 213);
+    }
+    .camera-debug .cd-row {
+      display: grid;
+      grid-template-columns: 16px 1fr 62px;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .camera-debug .cd-row span {
+      text-align: center;
+      opacity: 0.85;
+    }
+    .camera-debug input[type="range"] {
+      width: 100%;
+      accent-color: rgb(180, 60, 228);
+    }
+    .camera-debug input[type="number"] {
+      width: 100%;
+      padding: 2px 4px;
+      border: 1px solid rgba(173, 180, 228, 0.4);
+      border-radius: 4px;
+      background: rgba(18, 41, 95, 0.6);
+      color: inherit;
+      font: inherit;
+    }
+    .camera-debug .cd-actions {
+      display: flex;
+      gap: 6px;
+      margin: 8px 0;
+    }
+    .camera-debug button {
+      flex: 1;
+      padding: 6px 8px;
+      border: none;
+      border-radius: 6px;
+      background: rgb(180, 60, 228);
+      color: rgb(243, 236, 247);
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .camera-debug button:hover {
+      background: rgb(173, 180, 228);
+      color: rgb(43, 46, 84);
+    }
+    .camera-debug .cd-output {
+      margin: 0;
+      padding: 8px;
+      border-radius: 6px;
+      background: rgba(18, 41, 95, 0.6);
+      color: rgb(159, 165, 213);
+      font-family: ui-monospace, monospace;
+      font-size: 11px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const panel = document.createElement("div");
+  panel.className = "camera-debug";
+
+  const title = document.createElement("div");
+  title.className = "cd-title";
+  title.textContent = "Cámara (debug)";
+  panel.appendChild(title);
+
+  const limitLabel = document.createElement("label");
+  limitLabel.className = "cd-toggle";
+  const limitCheckbox = document.createElement("input");
+  limitCheckbox.type = "checkbox";
+  limitLabel.append(
+    limitCheckbox,
+    document.createTextNode(" Respetar límites de órbita")
+  );
+  panel.appendChild(limitLabel);
+
+  const applyLimits = (enabled) => {
+    if (enabled) {
+      controls.minDistance = defaultLimits.minDistance;
+      controls.maxDistance = defaultLimits.maxDistance;
+      controls.minPolarAngle = defaultLimits.minPolarAngle;
+      controls.maxPolarAngle = defaultLimits.maxPolarAngle;
+      controls.minAzimuthAngle = defaultLimits.minAzimuthAngle;
+      controls.maxAzimuthAngle = defaultLimits.maxAzimuthAngle;
+      controls.minPan.copy(defaultLimits.minPan);
+      controls.maxPan.copy(defaultLimits.maxPan);
+    } else {
+      controls.minDistance = 0.1;
+      controls.maxDistance = Infinity;
+      controls.minPolarAngle = -Infinity;
+      controls.maxPolarAngle = Infinity;
+      controls.minAzimuthAngle = -Infinity;
+      controls.maxAzimuthAngle = Infinity;
+      controls.minPan.set(-Infinity, -Infinity, -Infinity);
+      controls.maxPan.set(Infinity, Infinity, Infinity);
+    }
+  };
+
+  limitCheckbox.addEventListener("change", () => {
+    applyLimits(limitCheckbox.checked);
+    controls.update();
+  });
+
+  const fmt = (value) => Math.round(value * 1000) / 1000;
+  const rows = [];
+
+  const makeGroup = (label, getVec, onChange) => {
+    const group = document.createElement("div");
+    group.className = "cd-group";
+
+    const heading = document.createElement("div");
+    heading.className = "cd-group-title";
+    heading.textContent = label;
+    group.appendChild(heading);
+
+    ["x", "y", "z"].forEach((axis) => {
+      const row = document.createElement("label");
+      row.className = "cd-row";
+
+      const name = document.createElement("span");
+      name.textContent = axis.toUpperCase();
+
+      const range = document.createElement("input");
+      range.type = "range";
+      range.min = -120;
+      range.max = 120;
+      range.step = 0.1;
+
+      const num = document.createElement("input");
+      num.type = "number";
+      num.step = "any";
+      num.inputMode = "decimal";
+
+      const setValue = (value) => {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) return;
+        getVec()[axis] = parsed;
+        range.value = parsed;
+        num.value = fmt(parsed);
+        if (onChange) onChange();
+      };
+
+      range.addEventListener("input", () => setValue(range.value));
+      num.addEventListener("input", () => setValue(num.value));
+
+      row.append(name, range, num);
+      group.appendChild(row);
+
+      rows.push({ getVec, axis, range, num });
+    });
+
+    panel.appendChild(group);
+  };
+
+  makeGroup("Posición", () => camera.position, () => controls.update());
+  makeGroup("Target", () => controls.target, () => controls.update());
+
+  if (unbakedLighting?.sun) {
+    makeGroup(
+      "Sol",
+      () => unbakedLighting.sun.position,
+      () => {
+        renderer.shadowMap.needsUpdate = true;
+      }
+    );
+  }
+
+  if (unbakedLighting?.lamp) {
+    makeGroup("Luz escritorio", () => unbakedLighting.lamp.position);
+  }
+
+  const autoBtn = document.createElement("button");
+  autoBtn.type = "button";
+  autoBtn.textContent = "Auto diagonal";
+  autoBtn.addEventListener("click", () => {
+    const root = window.__portfolioDebug?.glb?.scene ?? scene;
+    const box = new THREE.Box3();
+    const temp = new THREE.Box3();
+    root.updateWorldMatrix(true, true);
+    root.traverse((object) => {
+      if (!object.isMesh || !object.geometry) return;
+      temp.setFromObject(object);
+      const objectSize = temp.getSize(new THREE.Vector3());
+      if (objectSize.x > 50 || objectSize.y > 50 || objectSize.z > 50) {
+        return;
+      }
+      box.union(temp);
+    });
+
+    if (box.isEmpty()) return;
+    const boxSize = box.getSize(new THREE.Vector3());
+    if (boxSize.x < 5 && boxSize.z < 5) return;
+
+    const center = box.getCenter(new THREE.Vector3());
+    const vFov = THREE.MathUtils.degToRad(camera.fov);
+    const tanV = Math.tan(vFov / 2);
+    const tanH = tanV * camera.aspect;
+    const horizontalExtent = (boxSize.x + boxSize.z) / Math.SQRT2;
+    const distanceH = horizontalExtent / 2 / tanH;
+    const distanceV = boxSize.y / 2 / tanV;
+    const distance = Math.max(distanceH, distanceV) * 1.1;
+
+    controls.target.copy(center);
+    camera.position
+      .copy(center)
+      .addScaledVector(new THREE.Vector3(0.8, 0.5, 1).normalize(), distance);
+    controls.update();
+    cameraDebugUpdate(true);
+  });
+
+  const autoWrap = document.createElement("div");
+  autoWrap.className = "cd-actions";
+  autoWrap.appendChild(autoBtn);
+  panel.appendChild(autoWrap);
+
+  const actions = document.createElement("div");
+  actions.className = "cd-actions";
+
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.textContent = "Copiar config";
+  copyBtn.addEventListener("click", async () => {
+    const p = camera.position;
+    const t = controls.target;
+    const sun = unbakedLighting?.sun?.position;
+    const lamp = unbakedLighting?.lamp;
+    let snippet =
+      `export const UNBAKED_CAMERA = {\n` +
+      `  position: [${fmt(p.x)}, ${fmt(p.y)}, ${fmt(p.z)}],\n` +
+      `  target: [${fmt(t.x)}, ${fmt(t.y)}, ${fmt(t.z)}],\n` +
+      `};`;
+
+    const lightLines = [];
+    if (sun) {
+      lightLines.push(
+        `sunPosition: [${fmt(sun.x)}, ${fmt(sun.y)}, ${fmt(sun.z)}],`
+      );
+    }
+    if (lamp) {
+      const lp = lamp.position;
+      lightLines.push(
+        `lamp: {\n` +
+          `  position: [${fmt(lp.x)}, ${fmt(lp.y)}, ${fmt(lp.z)}],\n` +
+          `  color: "#${lamp.color.getHexString()}",\n` +
+          `},`
+      );
+    }
+    if (lightLines.length) {
+      snippet += `\n\n// dentro de UNBAKED_LIGHTS:\n` + lightLines.join("\n");
+    }
+
+    try {
+      await navigator.clipboard.writeText(snippet);
+      copyBtn.textContent = "¡Copiado!";
+    } catch (error) {
+      copyBtn.textContent = "Mira la consola";
+    }
+
+    console.log(snippet);
+
+    window.setTimeout(() => {
+      copyBtn.textContent = "Copiar config";
+    }, 1500);
+  });
+
+  const resetBtn = document.createElement("button");
+  resetBtn.type = "button";
+  resetBtn.textContent = "Reset";
+  resetBtn.addEventListener("click", () => {
+    camera.position.copy(initialPosition);
+    controls.target.copy(initialTarget);
+    controls.update();
+    cameraDebugUpdate(true);
+  });
+
+  actions.append(copyBtn, resetBtn);
+  panel.appendChild(actions);
+
+  const output = document.createElement("pre");
+  output.className = "cd-output";
+  panel.appendChild(output);
+
+  const isEditing = (element) =>
+    document.activeElement === element &&
+    (element.type === "number" || element.matches(":active"));
+
+  const refresh = (force = false) => {
+    rows.forEach(({ getVec, axis, range, num }) => {
+      if (force || (!isEditing(range) && !isEditing(num))) {
+        range.value = getVec()[axis];
+        num.value = fmt(getVec()[axis]);
+      }
+    });
+
+    const p = camera.position;
+    const t = controls.target;
+    output.textContent =
+      `position: [${fmt(p.x)}, ${fmt(p.y)}, ${fmt(p.z)}]\n` +
+      `target:   [${fmt(t.x)}, ${fmt(t.y)}, ${fmt(t.z)}]`;
+  };
+
+  cameraDebugUpdate = refresh;
+
+  document.body.appendChild(panel);
+  applyLimits(false);
+  cameraDebugUpdate(true);
+};
+
+const ENABLE_CAMERA_DEBUG = false;
+
+if (import.meta.env.DEV && ENABLE_CAMERA_DEBUG) {
+  setupCameraDebug();
 }
 
 window.addEventListener("resize", () => {
@@ -512,10 +895,10 @@ const loadingScreenButton = document.querySelector(".loading-screen-button");
 const noSoundButton = document.querySelector(".no-sound-button");
 
 manager.onLoad = function () {
-  loadingScreenButton.style.border = "8px solid #3a2f5c";
-  loadingScreenButton.style.background = "#2b2140";
-  loadingScreenButton.style.color = "#f3ecf7";
-  loadingScreenButton.style.boxShadow = "rgba(0, 0, 0, 0.24) 0px 3px 8px";
+  loadingScreenButton.style.border = `8px solid ${UI_PALETTE.slate}`;
+  loadingScreenButton.style.background = UI_PALETTE.midnight;
+  loadingScreenButton.style.color = UI_PALETTE.periwinkle;
+  loadingScreenButton.style.boxShadow = `rgba(0, 0, 0, 0.24) 0px 3px 8px`;
   loadingState = "ready";
   loadingScreenButton.textContent = translate("$loading.enter");
   loadingScreenButton.style.cursor = "pointer";
@@ -531,12 +914,12 @@ manager.onLoad = function () {
     loadingState = "entered";
     noSoundButton.textContent = "";
     loadingScreenButton.style.cursor = "default";
-    loadingScreenButton.style.border = "8px solid #6e5e9c";
-    loadingScreenButton.style.background = "#e8ded6";
-    loadingScreenButton.style.color = "#3a2f5c";
+    loadingScreenButton.style.border = `8px solid ${UI_PALETTE.slate}`;
+    loadingScreenButton.style.background = UI_PALETTE.periwinkle;
+    loadingScreenButton.style.color = UI_PALETTE.midnight;
     loadingScreenButton.style.boxShadow = "none";
     loadingScreenButton.textContent = translate("$loading.hello");
-    loadingScreen.style.background = "#e8ded6";
+    loadingScreen.style.background = UI_PALETTE.periwinkle;
     isDisabled = true;
 
     toggleFavicons();
@@ -2301,6 +2684,8 @@ const render = (timestamp) => {
 
   //Update Orbit Controls
   controls.update();
+
+  if (cameraDebugUpdate) cameraDebugUpdate();
 
   // Update Clock hand rotation
   updateClockHands();

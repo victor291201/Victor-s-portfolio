@@ -16,8 +16,10 @@ dist-ssr
 unused_models/
 *.blend
 *.blend1
+*.blend@
 
 # Editor directories and files
+.history/
 .vscode/*
 !.vscode/extensions.json
 .idea

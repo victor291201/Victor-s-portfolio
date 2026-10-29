@@ -105,6 +105,34 @@ set_single_material("cama2_second", "Material.015")
 
 
 # ---------------------------------------------------------------------------
+# 1b. Depink the Room (walls) material: shift pinkish color-ramp elements
+# toward cool lavender grays, keeping luminance. Masks and already-cool
+# colors are left untouched.
+# ---------------------------------------------------------------------------
+room_mat = bpy.data.materials.get("Room")
+if room_mat and room_mat.use_nodes:
+    def depink(color):
+        r, g, b = color[0], color[1], color[2]
+        if r > g + 0.03 and r >= b - 0.02 and b > g:
+            new_r = min(1.0, (g + b) / 2.0 * 0.95)
+            new_b = min(1.0, b * 1.05)
+            return (new_r, g, new_b, 1.0)
+        return None
+
+    for node in room_mat.node_tree.nodes:
+        if node.type == 'VALTORGB':
+            for element in node.color_ramp.elements:
+                fixed = depink(element.color)
+                if fixed:
+                    print(
+                        "DEPINK", node.name, round(element.position, 3),
+                        tuple(round(v, 3) for v in element.color),
+                        "->", tuple(round(v, 3) for v in fixed),
+                    )
+                    element.color = fixed
+
+
+# ---------------------------------------------------------------------------
 # 2. Decide which objects need a base-color bake.
 # ---------------------------------------------------------------------------
 def chain_has_image(node, seen):
@@ -222,7 +250,58 @@ def select_only(obj):
     bpy.context.view_layer.objects.active = obj
 
 
+def _build_lc_map():
+    # name -> (layer_collection, parent_layer_collection or None)
+    mapping = {}
+
+    def walk(lc, parent):
+        mapping[lc.collection.name] = (lc, parent)
+        for child in lc.children:
+            walk(child, lc)
+
+    root = bpy.context.view_layer.layer_collection
+    for child in root.children:
+        walk(child, None)
+    return mapping
+
+
+LC_MAP = _build_lc_map()
+
+
+def ensure_in_view_layer(obj):
+    # Objects in excluded/disabled collections cannot be selected for baking
+    # (the room shell 'Cube' was here), which left their procedural materials
+    # unbaked and exported as a flat fallback color. Re-enable the chain of
+    # collections the object lives in before touching it.
+    coll = obj.users_collection[0] if obj.users_collection else None
+    if coll is None:
+        # Orphan object with no collection at all: link it to the active
+        # collection so it enters the view layer and can be baked.
+        try:
+            target = bpy.context.view_layer.active_layer_collection.collection
+        except Exception:
+            target = bpy.context.scene.collection
+        target.objects.link(obj)
+        print("RELINKED", obj.name, "->", target.name)
+        coll = obj.users_collection[0] if obj.users_collection else None
+    entry = LC_MAP.get(coll.name) if coll else None
+    lc = entry[0] if entry else None
+    while lc is not None:
+        lc.hide_viewport = False
+        try:
+            lc.exclude = False
+        except Exception:
+            pass
+        lc = LC_MAP[lc.collection.name][1]
+    try:
+        obj.hide_set(False)
+    except Exception:
+        pass
+
+
 def bake_object(obj):
+    ensure_in_view_layer(obj)
+
     # Linked duplicates must be made single-user before touching their data.
     if obj.data.users > 1:
         obj.data = obj.data.copy()

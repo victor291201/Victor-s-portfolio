@@ -3,56 +3,156 @@
 @use "./styles/variables.scss" as vars;
 @use "./styles/defaults.scss" as media;
 
-// THIS SCSS CODE IS RUSHED AND SUPER BAD PLEASE DON'T LOOK AT IT LOOOOL
+// ============================================================
+// Interface theming
+// Day (.light-theme)  -> only the three "Enter!" colors: Periwinkle, Slate,
+//   Midnight (no violet/lavender per user feedback).
+// Night (.dark-theme) -> neon cyan + ultraviolet + yellow only.
+// All colors flow through CSS custom properties declared per theme,
+// so the day/night toggle cross-fades every surface at once.
+// ============================================================
 
-$themes: (
-  light: (
-    base-dark-purple: #3a2f5c,
-    base-purple: #6e5e9c,
-    base-purple-200: #c1a6c8,
-    base-pink: #f59061,
-    base-light-purple: #e8ded6,
-    header-text: #3a2f5c,
-    text: #2b2140,
-    svgs: #6e5e9c,
-    overlay-bg: rgba(58, 47, 92, 0.35),
-    scrollbar-track: #e8ded6,
-  ),
-  dark: (
-    base-dark-purple: #f3ecf7,
-    base-purple: #c1a6c8,
-    base-purple-200: #6e5e9c,
-    base-pink: #f59061,
-    base-light-purple: #3a2f5c,
-    header-text: #f3ecf7,
-    text: #f3ecf7,
-    svgs: #c1a6c8,
-    overlay-bg: rgba(20, 18, 40, 0.6),
-    scrollbar-track: #2b2140,
-  ),
-);
+body.light-theme {
+  --ui-panel-bg: #{vars.$color-periwinkle};
+  // Transparent placeholder keeps shadow lists valid in day mode.
+  --ui-glow-idle: 0 0 0 0 #{rgba(vars.$color-midnight, 0)};
+  --ui-surface: #{vars.$color-slate};
+  --ui-border: #{vars.$color-slate};
+  --ui-border-width: 8px;
+  --ui-accent: #{vars.$color-midnight};
+  --ui-text: #{vars.$color-midnight};
+  --ui-text-strong: #{vars.$color-midnight};
+  --ui-icon: #{vars.$color-slate};
+  --ui-muted: #{rgba(vars.$color-periwinkle, 0.65)};
+  --ui-muted-hover: #{vars.$color-periwinkle};
+  --ui-overlay-bg: #{rgba(vars.$color-midnight, 0.35)};
+  --ui-panel-shadow: 0px 3px 8px #{rgba(vars.$color-midnight, 0.45)};
+  --ui-soft-shadow: 0px 3px 8px #{rgba(vars.$color-midnight, 0.45)};
+  --ui-glow: none;
+  --ui-image-glow: none;
+  --ui-text-glow: none;
+  --ui-icon-glow: none;
+  --ui-title-glow: none;
+  --ui-scrollbar-track: #{rgba(vars.$color-slate, 0.2)};
+  --ui-scrollbar-thumb: #{vars.$color-midnight};
+  --ui-active-bg: #{vars.$color-periwinkle};
+  --ui-active-text: #{vars.$color-midnight};
+  --ui-active-glow: none;
+  --ui-active-shadow: 0 0 0 0 #{rgba(vars.$color-midnight, 0)};
+  // Modal title = same midnight pill as the Enter! button.
+  --ui-title-bg: #{vars.$color-midnight};
+  --ui-title-text: #{vars.$color-periwinkle};
+  --ui-title-border: #{vars.$color-slate};
+  // Day buttons follow the "Enter!" loading button: midnight pill, slate
+  // border, periwinkle text, soft shadow.
+  --ui-btn-bg: #{vars.$color-midnight};
+  --ui-btn-border: #{vars.$color-slate};
+  --ui-btn-text: #{vars.$color-periwinkle};
+  --ui-bullet: #{vars.$color-midnight};
+  --ui-bullet-hover: #{vars.$color-slate};
+  --ui-loading-bg: #{vars.$color-midnight};
+  --ui-loading-text: #{vars.$color-periwinkle};
+}
 
-// Theme mixins
-@mixin themed() {
-  @each $theme, $map in $themes {
-    .#{$theme}-theme & {
-      $theme-map: () !global;
-      @each $key, $value in $map {
-        $theme-map: map-merge(
-          $theme-map,
-          (
-            $key: $value,
-          )
-        ) !global;
-      }
-      @content;
-      $theme-map: null !global;
-    }
+body.dark-theme {
+  // Night: neon = glowing outlines, no solid fills. Tube core in bright Violet
+  // (raw #7F00FF reads as flat purple; neon look = bright core + deep uv halo),
+  // cyan text/icons + yellow accents. Panels show the blurred room through
+  // them. Border width stays 8px like day.
+  --ui-panel-bg: transparent;
+  --ui-surface: transparent;
+  --ui-border: #{vars.$color-violet};
+  --ui-border-width: 8px;
+  --ui-accent: #{vars.$color-neon-yellow};
+  --ui-text: #{vars.$color-neon-cyan};
+  --ui-text-strong: #{vars.$color-neon-cyan};
+  --ui-icon: #{vars.$color-neon-cyan};
+  --ui-muted: #{rgba(vars.$color-neon-cyan, 0.7)};
+  --ui-muted-hover: #{vars.$color-neon-yellow};
+  --ui-overlay-bg: #{rgba(vars.$color-navy, 0.55)};
+  --ui-panel-shadow: 0 0 16px #{rgba(vars.$color-violet, 0.75)},
+    0 0 46px #{rgba(vars.$color-neon-ultraviolet, 0.45)},
+    0 0 12px #{rgba(vars.$color-neon-cyan, 0.5)},
+    inset 0 0 26px #{rgba(vars.$color-neon-ultraviolet, 0.3)};
+  --ui-soft-shadow: 0 0 10px #{rgba(vars.$color-violet, 0.8)},
+    0 0 24px #{rgba(vars.$color-neon-ultraviolet, 0.45)};
+  // Bright halo for floating controls (selector/toggles); the soft-shadow
+  // alone gets swallowed by the 8px border + dark scene.
+  --ui-glow-idle: 0 0 18px 4px #{rgba(vars.$color-violet, 0.85)},
+    0 0 12px 2px #{rgba(vars.$color-neon-cyan, 0.55)},
+    0 0 55px 10px #{rgba(vars.$color-neon-ultraviolet, 0.6)};
+  --ui-glow: 0 0 12px #{rgba(vars.$color-violet, 0.8)},
+    0 0 28px #{rgba(vars.$color-neon-ultraviolet, 0.45)};
+  --ui-image-glow: 0 0 12px #{rgba(vars.$color-violet, 0.75)},
+    0 0 30px #{rgba(vars.$color-neon-ultraviolet, 0.4)};
+  --ui-text-glow: 0 0 8px #{rgba(vars.$color-neon-cyan, 0.6)},
+    0 0 18px #{rgba(vars.$color-neon-ultraviolet, 0.35)};
+  --ui-icon-glow: drop-shadow(0 0 6px #{rgba(vars.$color-neon-cyan, 0.9)})
+    drop-shadow(0 0 16px #{rgba(vars.$color-violet, 0.7)});
+  --ui-title-glow: 0 0 10px #{rgba(vars.$color-neon-cyan, 0.85)},
+    0 0 28px #{rgba(vars.$color-violet, 0.7)};
+  --ui-scrollbar-track: #{rgba(vars.$color-navy, 0.6)};
+  --ui-scrollbar-thumb: #{vars.$color-violet};
+  // Active language pill: lit-up violet fill + yellow glowing text.
+  --ui-active-bg: #{rgba(vars.$color-violet, 0.85)};
+  --ui-active-text: #{vars.$color-neon-yellow};
+  --ui-active-glow: 0 0 8px #{rgba(vars.$color-neon-yellow, 0.8)},
+    0 0 22px #{rgba(vars.$color-neon-yellow, 0.45)};
+  --ui-active-shadow: 0 0 14px 2px #{rgba(vars.$color-violet, 0.8)},
+    0 0 34px 8px #{rgba(vars.$color-neon-ultraviolet, 0.55)};
+  --ui-title-bg: transparent;
+  --ui-title-text: #{vars.$color-neon-cyan};
+  --ui-title-border: #{vars.$color-violet};
+  // Night buttons: transparent neon outlines (glow carries the style).
+  --ui-btn-bg: transparent;
+  --ui-btn-border: #{vars.$color-violet};
+  --ui-btn-text: #{vars.$color-neon-cyan};
+  --ui-bullet: #{vars.$color-neon-cyan};
+  --ui-bullet-hover: #{vars.$color-neon-yellow};
+  --ui-loading-bg: #{vars.$color-navy};
+  --ui-loading-text: #{vars.$color-neon-cyan};
+}
+
+// Cross-fade for every themed surface when day/night flips.
+@mixin theme-fade {
+  transition: background-color 0.6s ease, border-color 0.6s ease,
+    color 0.6s ease, box-shadow 0.6s ease, text-shadow 0.6s ease,
+    filter 0.6s ease;
+}
+
+// Neon flicker for modal titles (night only).
+@keyframes neon-title-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  91% {
+    opacity: 1;
+  }
+  92% {
+    opacity: 0.6;
+  }
+  93% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.75;
+  }
+  97% {
+    opacity: 1;
   }
 }
 
-@function t($key) {
-  @return map-get($theme-map, $key);
+// Breathing glow for modal panels (night only).
+@keyframes neon-panel-pulse {
+  from {
+    box-shadow: 0 0 14px #{rgba(vars.$color-violet, 0.6)},
+      0 0 38px #{rgba(vars.$color-neon-cyan, 0.35)};
+  }
+  to {
+    box-shadow: 0 0 24px #{rgba(vars.$color-violet, 0.9)},
+      0 0 60px #{rgba(vars.$color-neon-cyan, 0.55)};
+  }
 }
 
 * {
@@ -112,8 +212,10 @@ ul {
       content: "•";
       position: absolute;
       left: -1.5rem;
-      color: vars.$base-purple;
+      color: var(--ui-bullet);
       font-size: 1.5em;
+      text-shadow: var(--ui-text-glow);
+      transition: color 0.2s ease, transform 0.2s ease;
     }
 
     // Nested lists
@@ -136,9 +238,8 @@ ul {
   // Hover effect
   li:hover {
     &:before {
-      color: vars.$base-dark-purple;
+      color: var(--ui-bullet-hover);
       transform: scale(1.2);
-      transition: all 0.2s ease;
     }
   }
 }
@@ -160,7 +261,9 @@ ul {
   width: 100%;
   border-radius: 24px;
   object-fit: cover;
-  border: 6px solid vars.$base-purple;
+  border: 6px solid var(--ui-border);
+  box-shadow: var(--ui-image-glow);
+  @include theme-fade;
 }
 
 .work-image-wrapper {
@@ -175,7 +278,9 @@ ul {
   width: 100%;
   border-radius: 24px;
   object-fit: cover;
-  border: 6px solid vars.$base-purple;
+  border: 6px solid var(--ui-border);
+  box-shadow: var(--ui-image-glow);
+  @include theme-fade;
 }
 
 // Overlay
@@ -188,9 +293,16 @@ ul {
   left: 0;
   z-index: 3;
   display: none;
-  background-color: rgba(32, 32, 32, 0.2);
+  background-color: var(--ui-overlay-bg);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  @include theme-fade;
+}
+
+// Night: panels are transparent, so blur the backdrop more for readability.
+.dark-theme .overlay {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 //Modals
@@ -207,7 +319,14 @@ ul {
   padding: 30px;
   border-radius: 25px;
   display: none;
-  border: 8px solid vars.$base-purple;
+  border: var(--ui-border-width) solid var(--ui-border);
+  background-color: var(--ui-panel-bg);
+  box-shadow: var(--ui-panel-shadow);
+  @include theme-fade;
+}
+
+.dark-theme .modal {
+  animation: neon-panel-pulse 2.8s ease-in-out infinite alternate;
 }
 
 .about {
@@ -233,9 +352,12 @@ ul {
   @include vars.centered;
   padding: 10px 80px;
   border-radius: 5rem;
-  color: vars.$base-dark-purple;
-  background-color: vars.$base-purple-200;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  color: var(--ui-title-text);
+  text-shadow: var(--ui-title-glow);
+  background-color: var(--ui-title-bg);
+  border: 2px solid var(--ui-title-border);
+  box-shadow: var(--ui-soft-shadow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     font-size: 1.5rem;
     padding: 10px 20px;
@@ -243,20 +365,30 @@ ul {
   }
 }
 
+.dark-theme .modal-title {
+  animation: neon-title-flicker 4s linear infinite;
+}
+
 .modal-paragraph-header {
   font-size: 1.5rem;
   margin-top: 24px;
   margin-bottom: 8px;
+  color: var(--ui-text-strong);
+  text-shadow: var(--ui-text-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     font-size: 1.3rem;
   }
 }
 
 .modal-paragraph-header-2 {
-  border-top: 2px solid vars.$base-purple;
+  border-top: 2px solid var(--ui-border);
   font-size: 1.2rem;
   padding-top: 24px;
   margin-bottom: 8px;
+  color: var(--ui-text-strong);
+  text-shadow: var(--ui-text-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     font-size: 1.3rem;
   }
@@ -264,6 +396,9 @@ ul {
 
 .modal-paragraph-text {
   font-size: 1.5rem;
+  color: var(--ui-text);
+  text-shadow: var(--ui-text-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     font-size: 1.3rem;
   }
@@ -271,6 +406,9 @@ ul {
 
 .list-text {
   font-size: 1.5rem;
+  color: var(--ui-text);
+  text-shadow: var(--ui-text-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     font-size: 1.3rem;
   }
@@ -278,6 +416,9 @@ ul {
 
 .list-text-2 {
   font-size: 1.2rem;
+  color: var(--ui-text);
+  text-shadow: var(--ui-text-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     font-size: 1.3rem;
   }
@@ -335,11 +476,11 @@ ul {
   &::-webkit-scrollbar-track {
     width: 2px;
     border-radius: 4px;
-    background-color: rgba(111, 73, 116, 0.2);
+    background-color: var(--ui-scrollbar-track);
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: vars.$base-dark-purple;
+    background-color: var(--ui-scrollbar-thumb);
     border-radius: 4px;
   }
 }
@@ -383,14 +524,15 @@ ul {
   position: absolute;
   top: -2.3rem;
   left: -2.3rem;
-  border: 8px solid vars.$base-purple;
-  background-color: vars.$base-light-purple;
+  border: var(--ui-border-width) solid var(--ui-btn-border);
+  background-color: var(--ui-btn-bg);
   padding: 15px;
   border-radius: 1.2rem;
   cursor: pointer;
   transform: rotate(-15deg);
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  box-shadow: var(--ui-soft-shadow), var(--ui-glow-idle);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.6s ease, border-color 0.6s ease, box-shadow 0.6s ease;
 
   &:hover {
     transform: rotate(45deg) scale(1.3);
@@ -412,7 +554,9 @@ ul {
 .exit-button-svg {
   width: 40px;
   height: 40px;
-  color: vars.$base-purple;
+  color: var(--ui-btn-text);
+  filter: var(--ui-icon-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     width: 25px;
     height: 25px;
@@ -429,8 +573,16 @@ ul {
   width: 40px;
   height: 40px;
   cursor: pointer;
+  color: var(--ui-icon);
+  stroke: var(--ui-icon);
+  filter: var(--ui-icon-glow);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    color 0.6s ease, filter 0.6s ease;
 
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  &:hover {
+    color: var(--ui-accent);
+    stroke: var(--ui-accent);
+  }
 }
 
 .linkedin {
@@ -493,7 +645,9 @@ ul {
   width: 40px;
   height: 40px;
 
-  stroke: vars.$base-purple;
+  stroke: var(--ui-btn-text);
+  filter: var(--ui-icon-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     width: 30px;
     height: 30px;
@@ -504,7 +658,9 @@ ul {
   width: 40px;
   height: 40px;
   display: none;
-  stroke: vars.$base-purple;
+  stroke: var(--ui-btn-text);
+  filter: var(--ui-icon-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     top: 30px;
     right: 96px;
@@ -517,13 +673,36 @@ ul {
 
 .toggle-buttons {
   @include vars.centered;
-  border: 8px solid vars.$base-purple;
-  background-color: vars.$base-light-purple;
+  border: var(--ui-border-width) solid var(--ui-btn-border);
+  background-color: var(--ui-btn-bg);
   padding: 10px;
-  color: vars.$base-purple;
+  color: var(--ui-btn-text);
   border-radius: 1.2rem;
   cursor: pointer;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+  box-shadow: var(--ui-soft-shadow), var(--ui-glow-idle);
+  @include theme-fade;
+}
+
+// Floating neon controls breathe like the modals do.
+@keyframes neon-outline-pulse {
+  from {
+    box-shadow: 0 0 12px 2px #{rgba(vars.$color-violet, 0.65)},
+      0 0 8px 1px #{rgba(vars.$color-neon-cyan, 0.4)},
+      0 0 34px 6px #{rgba(vars.$color-neon-ultraviolet, 0.45)};
+  }
+  to {
+    box-shadow: 0 0 22px 5px #{rgba(vars.$color-violet, 0.95)},
+      0 0 14px 3px #{rgba(vars.$color-neon-cyan, 0.65)},
+      0 0 65px 12px #{rgba(vars.$color-neon-ultraviolet, 0.7)};
+  }
+}
+
+.dark-theme {
+  .language-selector,
+  .toggle-buttons,
+  .modal-exit-button {
+    animation: neon-outline-pulse 2.2s ease-in-out infinite alternate;
+  }
 }
 
 .language-selector {
@@ -535,15 +714,11 @@ ul {
   display: flex;
   gap: 6px;
   padding: 8px;
-  border: 8px solid vars.$base-purple;
-  background-color: vars.$base-light-purple;
+  border: var(--ui-border-width) solid var(--ui-btn-border);
+  background-color: var(--ui-btn-bg);
   border-radius: 1.2rem;
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
-
-  @include themed() {
-    border-color: t("base-purple");
-    background-color: t("base-light-purple");
-  }
+  box-shadow: var(--ui-soft-shadow), var(--ui-glow-idle);
+  @include theme-fade;
 
   @include media.media("<=tablet") {
     top: 30px;
@@ -557,25 +732,29 @@ ul {
 .language-button {
   border: none;
   background: transparent;
-  color: vars.$base-purple;
+  color: var(--ui-btn-text);
   font-family: "Motley Forces";
   font-size: 18px;
   padding: 4px 8px;
   border-radius: 0.6rem;
   cursor: pointer;
   opacity: 0.6;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.6s ease, color 0.6s ease, box-shadow 0.6s ease,
+    text-shadow 0.6s ease;
 
-  @include themed() {
-    color: t("base-purple");
+  &:hover {
+    color: var(--ui-btn-text);
+    opacity: 1;
+    transform: scale(1.15);
   }
 
   &.active {
     opacity: 1;
-    background-color: vars.$base-purple-200;
-
-    @include themed() {
-      background-color: t("base-purple-200");
-    }
+    color: var(--ui-active-text);
+    background-color: var(--ui-active-bg);
+    box-shadow: var(--ui-active-shadow);
+    text-shadow: var(--ui-active-glow);
   }
 
   @include media.media("<=tablet") {
@@ -606,7 +785,9 @@ ul {
   width: 40px;
   height: 40px;
 
-  stroke: vars.$base-purple;
+  stroke: var(--ui-btn-text);
+  filter: var(--ui-icon-glow);
+  @include theme-fade;
   @include media.media("<=tablet") {
     width: 30px;
     height: 30px;
@@ -616,8 +797,10 @@ ul {
 .moon-svg {
   width: 40px;
   height: 40px;
-  stroke: vars.$base-purple;
+  stroke: var(--ui-btn-text);
+  filter: var(--ui-icon-glow);
   display: none;
+  @include theme-fade;
   @include media.media("<=tablet") {
     width: 30px;
     height: 30px;
@@ -626,121 +809,6 @@ ul {
 
 .sm-font {
   font-size: 1.2rem;
-}
-
-ul {
-  li {
-    &:before {
-      @include themed() {
-        color: t("text");
-      }
-    }
-
-    &:hover {
-      &:before {
-        @include themed() {
-          color: t("base-purple");
-        }
-      }
-    }
-  }
-}
-
-.base-image {
-  @include themed() {
-    border-color: t("base-purple");
-  }
-}
-
-.work-base-image {
-  @include themed() {
-    border-color: t("base-purple");
-  }
-}
-
-.overlay {
-  @include themed() {
-    background-color: t("overlay-bg");
-  }
-}
-
-.modal {
-  @include themed() {
-    border-color: t("base-purple");
-    background-color: t("base-light-purple");
-  }
-}
-
-.modal-title {
-  @include themed() {
-    color: t("header-text");
-    background-color: t("base-purple-200");
-  }
-}
-
-.modal-paragraph-header-2 {
-  @include themed() {
-    border-color: t("base-purple");
-  }
-}
-
-.modal-content-wrapper {
-  &::-webkit-scrollbar-track {
-    @include themed() {
-      background-color: t("scrollbar-track");
-    }
-  }
-
-  &::-webkit-scrollbar-thumb {
-    @include themed() {
-      background-color: t("base-dark-purple");
-    }
-  }
-}
-
-.list-text,
-.list-text-2,
-.modal-paragraph-header,
-.modal-paragraph-header-2,
-.modal-paragraph-text {
-  @include themed() {
-    color: t("text");
-  }
-}
-
-.modal-exit-button {
-  @include themed() {
-    border-color: t("base-purple");
-    background-color: t("base-light-purple");
-  }
-}
-
-.exit-button-svg {
-  @include themed() {
-    color: t("svgs");
-  }
-}
-
-.toggle-buttons {
-  @include themed() {
-    border-color: t("base-purple");
-    background-color: t("base-light-purple");
-    color: t("base-purple");
-  }
-}
-
-.sound-svg,
-.sound-off-svg,
-.sun-svg,
-.github,
-.linkedin,
-.instagram,
-.mail,
-.moon-svg {
-  @include themed() {
-    stroke: t("svgs");
-    color: t("svgs");
-  }
 }
 
 .loading-screen {
@@ -754,10 +822,11 @@ ul {
   margin-top: -54vh;
   overflow: hidden;
   z-index: 999999;
-  border: 8px solid vars.$base-purple;
-  background-color: #2b2140;
+  border: var(--ui-border-width) solid var(--ui-border);
+  background-color: var(--ui-loading-bg);
   transform: perspective(1000px);
   border-radius: 48px;
+  @include theme-fade;
 }
 
 .loading-screen-button {
@@ -766,10 +835,12 @@ ul {
   background-color: transparent;
   padding: 10px 40px;
   outline: none;
-  color: #f3ecf7;
+  color: var(--ui-loading-text);
+  text-shadow: var(--ui-title-glow);
   border-radius: 1.2rem;
   border: none;
   font-size: 42px;
+  @include theme-fade;
 
   @include media.media("<=tablet") {
     font-size: 32px;
@@ -781,16 +852,18 @@ ul {
   @include vars.centered;
   background-color: transparent;
   border: none;
-  color: #c1a6c8;
+  color: var(--ui-muted);
 
   position: absolute;
   bottom: 15%;
   left: 50%;
   font-size: 16px;
   transform: translate(-50%, -50%);
+  @include theme-fade;
 
   &:hover {
-    color: #f3ecf7;
+    color: var(--ui-muted-hover);
+    text-shadow: var(--ui-text-glow);
     cursor: pointer;
   }
 }
@@ -805,7 +878,9 @@ ul {
   font-size: 28px;
   transform: translate(-50%, -50%);
   font-family: "Shifty Notes";
-  color: #f3ecf7;
+  color: var(--ui-loading-text);
+  text-shadow: var(--ui-text-glow);
+  @include theme-fade;
 }
 
 .desktop-instructions {

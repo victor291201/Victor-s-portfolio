@@ -16,6 +16,7 @@
 | Shaders        | GLSL (vite-plugin-glsl) |
 | 3D Compression | Draco (THREE.DRACOLoader) |
 | Models         | GLTF/GLB (loaded from Blender export) |
+| Baking         | Blender 5.0 Python (bpy), Cycles DIFFUSE bake (base color) |
 
 ## Commands
 
@@ -24,6 +25,12 @@ npm install          # Install dependencies
 npm run dev          # Start dev server (with --host for LAN access)
 npm run build        # Production build → dist/
 npm run preview      # Preview production build
+```
+
+Bake the room (regenerates `room_unbaked.glb` with per-object base color):
+
+```bash
+blender -b "blender files/Baking.blend" --python "blender files/export_unbaked.py"
 ```
 
 ## Project Structure
@@ -38,25 +45,31 @@ sooahs-room-folio-main/
 │   ├── draco/              # Draco decoder WASM/files
 │   ├── fonts/              # Custom fonts (Motley Forces, Shifty Notes)
 │   ├── images/             # Modal images (profile_pic, community, computer, piano)
-│   ├── media/              # Favicons (light/dark themes) + og-image
-│   ├── models/             # Room_Portfolio.glb (single large GLB)
+│   ├── media/              # Favicon (fixed "V") + og-image
+│   ├── models/             # Room_Portfolio.glb (baked) + room_unbaked.glb (unbaked)
 │   ├── shaders/            # perlin.png for smoke shader
 │   └── textures/
-│       ├── room/day/       # 4 day texture sets (first ~ fourth)
+│       ├── room/day/       # 4 day texture sets
 │       ├── room/night/     # 4 night texture sets
 │       ├── skybox/         # Cube map textures (px/nx/py/ny/pz/nz.webp)
 │       └── video/          # Screen.mp4 (plays on an in-game screen)
 ├── src/
-│   ├── main.js             # (2115 lines) ALL application logic
-│   ├── style.scss          # Main SCSS (762 lines)
+│   ├── main.js             # (2381 lines) application logic
+│   ├── config.js           # RENDER_MODE, model paths, camera, real-time lights
+│   ├── i18n.js             # es/pt/en translations
+│   ├── style.scss          # Main SCSS (824 lines)
 │   ├── styles/             # SCSS partials (fonts, reset, variables, defaults/media)
 │   ├── shaders/
 │   │   ├── smoke/          # Coffee steam smoke shader (vertex + fragment)
-│   │   ├── theme/          # Day/night texture blending shader (vertex + fragment)
+│   │   ├── theme/          # Day/night blending shader (vertex + fragment)
 │   │   └── includes/       # rotate2D.glsl utility
 │   └── utils/
 │       └── OrbitControls.js # Custom Three.js orbit controls
-└── blender files/          # Source Blender (.blend) file for the room
+└── blender files/          # Blender sources + bake scripts
+    ├── Baking.blend        # Bake source (333 MB)
+    ├── For Night Time Baking.blend  # Reference night lighting
+    ├── export_unbaked.py   # Per-object base-color bake → room_unbaked.glb
+    └── textures/           # Source bake PNG/WebP (4 texture sets)
 ```
 
 ## Color Palette
@@ -66,18 +79,22 @@ Canonical palette for the whole project (UI, 3D accents, shaders, favicons). All
 | Token | Hex | SCSS variable | Role |
 | ----- | --- | ------------- | ---- |
 | Periwinkle | `#ADB4E4` | `$color-periwinkle` | Primary light — panels, buttons, hover surfaces |
-| Violet | `#B43CE4` | `$color-violet` | Accent — CTA, active states, highlights (use sparingly) |
+| Violet | `#B43CE4` | `$color-violet` | Accent — CTA, active states, highlights; night UI: neon tube core color for borders/outlines |
 | Midnight | `#2B2E54` | `$color-midnight` | Dark base — body background, dark-theme surfaces |
 | Navy | `#12295F` | `$color-navy` | Deep base — gradients, shadows, depth layers |
 | Slate | `#626AA0` | `$color-slate` | Secondary — muted text, borders, dividers |
 | Lavender | `#9FA5D5` | `$color-lavender` | Soft neutral — secondary surfaces, disabled states |
+| Neon Pink | `#FF007F` | `$color-neon-pink` | Approved 2026-10 — currently unused in UI (kept out of the neon scheme per user feedback) |
+| Neon Cyan | `#00FFFF` | `$color-neon-cyan` | Night UI — body text, icons, headings (blue glow) |
+| Neon Yellow | `#FFFF00` | `$color-neon-yellow` | Night UI — hover/active accent only (use sparingly) |
+| Neon Ultraviolet | `#7F00FF` | `$color-neon-ultraviolet` | Night UI — panel/button outlines, glow halos, translucent active backgrounds |
 
 Usage rules:
 
 - Never hardcode hex values in `index.html`, `style.scss`, `src/styles/*`, or `main.js`. Import/consume the tokens above (SCSS variables for styles, a shared JS constant for Three.js materials/shaders).
 - Pair Violet only against Periwinkle/Lavender/Midnight/Navy — it fails AA contrast on white.
 - Body text on light surfaces → Midnight; on dark surfaces → Periwinkle or Lavender.
-- The existing variables in `src/styles/variables.scss` (`$base-dark-purple`, `$base-purple`, etc.) are legacy and must be migrated to these tokens whenever that file is touched.
+- `src/styles/variables.scss` now holds only the canonical + neon tokens above (`$base-*` legacy variables were migrated in the 2026-10 neon restyle). `src/config.js` exports `UI_PALETTE`, the JS mirror of these tokens for inline styles and Three.js materials.
 - New colors require user approval and a documented role in this table.
 
 ## Work Methodology
@@ -91,19 +108,27 @@ Usage rules:
 
 ## Architecture & Key Concepts
 
+### Rendering Pipeline (baked vs unbaked)
+
+The render mode is selected in `src/config.js` via `RENDER_MODE`:
+
+- **`baked`** (legacy/original): loads `Room_Portfolio.glb` + four day/night texture sets. Meshes named `First/Second/Third/Fourth` get the 4-set `theme/fragment.glsl` shader; day/night blend via `uMixRatio`.
+- **`unbaked`** (default, current): loads `room_unbaked.glb` (per-object baked base colors from `export_unbaked.py`). Lighting is baked **as base color only** — no lighting — so the sealed room isn't black. The scene is lit in real time with the rig in `config.js` (`UNBAKED_LIGHTS`); day/night animates those lights.
+
 ### 1. Loading Flow
-1. `THREE.LoadingManager` monitors all GLTF/texture loads.
+1. `THREE.LoadingManager` monitors the GLB load.
 2. On load complete → "Enter!" button appears on loading screen.
-3. User clicks → loading screen animates away → `playIntroAnimation()` starts.
-4. Intro animation uses GSAP timelines to scale objects from 0→1 in staggered groups.
+3. User clicks → loading screen animates away.
+4. **baked**: `playIntroAnimation()` scales objects 0→1 in staggered GSAP groups, then creates delayed hitboxes.
+5. **unbaked**: intro is skipped — `createDelayedHitboxes()` runs immediately.
 
 ### 2. The GLB Model
-- Single GLB file (`/models/Room_Portfolio.glb`) contains the entire room.
+- Single GLB file (`/models/room_unbaked.glb` for unbaked, `/models/Room_Portfolio.glb` for baked) contains the entire room.
 - Meshes use naming conventions to drive behavior:
   - **`*_Hover_*` / `*_Pointer_*`** → interactable (hover cursor, click actions).
   - **`*_Raycaster_*`** → receives raycasting hitbox generation.
   - **`*_Key`** (C1_Key, D#1_Key, etc.) → piano keys.
-  - **`First` / `Second` / `Third` / `Fourth`** → receive day/night shader materials.
+  - **`First` / `Second` / `Third` / `Fourth`** → (baked mode) receive day/night shader materials.
   - **`Water`, `Glass`, `Bubble`, `Screen`** → special materials.
   - **`Fan_*`** → continuous rotation (x-axis or y-axis groups).
   - **`Hour_Hand` / `Minute_Hand`** → clock hands tracking real time.
@@ -119,11 +144,12 @@ Usage rules:
 - Each hitbox maps back to the original mesh via `hitboxToObjectMap`.
 
 ### 4. Day/Night Theme
-- Four room texture sets (First–Fourth), each has a day and night variant.
-- `theme/fragment.glsl` shader blends between day/night textures via `uMixRatio` uniform.
-- Toggle button animates `uMixRatio` 0→1 (night) or 1→0 (day) over 1.5s with GSAP.
-- CSS theming switches `.light-theme` / `.dark-theme` classes on `<body>`.
-- Favicons swap between light/dark variants.
+- Two mechanisms depending on `RENDER_MODE`:
+  - **baked**: `theme/fragment.glsl` blends four day/night texture sets via `uMixRatio`.
+  - **unbaked**: `animateUnbakedTheme()` lerps the real-time light intensities + `scene.background` between `UNBAKED_LIGHTS.day` and `.night`.
+- Toggle button animates over 1.5s with GSAP.
+- CSS theming switches `.light-theme` / `.dark-theme` classes on `<body>`. Interface colors come from CSS custom properties defined per theme in `style.scss` (`--ui-*`): day uses the canonical palette, night uses the neon tokens with glow (`--ui-glow`, `--ui-panel-shadow`, `neon-panel-pulse`/`neon-title-flicker` keyframes). Never hardcode hex in component rules — consume the variables.
+- Favicon is fixed ("V") — `toggleFavicons()` is a no-op.
 
 ### 5. Audio
 - Background music: `.ogg` (known iPhone/Safari compatibility issue — see Known Issues).
@@ -144,7 +170,7 @@ Usage rules:
 
 ## Known Issues (from README)
 
-1. **Monolithic code**: All ~2115 lines in `main.js`. Should be refactored into modules.
+1. **Monolithic code**: All ~2381 lines in `main.js`. Should be refactored into modules.
 2. **Messy SCSS**: `style.scss` is disorganized; the author recommends rewriting styles.
 3. **iPhone/Safari .ogg bug**: `.ogg` audio files may not play. Need `.mp3` fallbacks for iOS.
 4. **Hover twitching/vibrating**: When hover animation scales/displaces a mesh, the raycaster may lose the hitbox, killing the tween. The tween revert causes re-hover, looping infinitely. They partially solved it with delayed hitboxes and `useOriginalMeshObjects`, but it can still occur at certain angles. To fully fix it, use static invisible hitboxes that don't animate.
@@ -160,10 +186,18 @@ Usage rules:
 
 ## Blender Workflow
 
-- Source file: `Before Baking original.blend` (in root) and `blender files/`.
-- Room exported as a single `Room_Portfolio.glb` with Draco compression.
-- Object names in Blender directly control behavior in JavaScript (Hover, Pointer, Raycaster, Key suffixes, etc.).
-- Textures are baked externally and loaded separately (not embedded in GLB).
+- Source: `blender files/Baking.blend` (333 MB) is the bake source. `For Night Time Baking.blend` holds the reference night lighting.
+- `export_unbaked.py` (run headless with Blender 5.0) bakes per-object base color and exports the GLB in one pass:
+
+```bash
+blender -b "blender files/Baking.blend" --python "blender files/export_unbaked.py"
+```
+
+- Output: `public/models/room_unbaked.glb` (Draco + WebP).
+- Bake config: Cycles CPU, 1 sample, no denoising, DIFFUSE `pass_filter={'COLOR'}` (base color only — no lighting, so the sealed room isn't black), `use_clear=True`, margin 4. Per-object `BakeUV` (smart project) at 256/512/1024 by object size.
+- Skips image-textured, transparent/glass/water, and unlit objects; flattens leftover procedural materials to a representative color.
+- `$env:SKIP_BAKE="1"` skips the bake for a fast geometry-only export.
+- Object names control runtime behavior (Hover, Pointer, Raycaster, Key suffixes).
 
 ## Development Notes
 

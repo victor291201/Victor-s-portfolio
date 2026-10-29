@@ -1,17 +1,23 @@
-$base-dark-purple: #3a2f5c;
-$base-purple: #6e5e9c;
-$base-purple-200: #c1a6c8;
-$base-pink: #f59061;
-$base-light-purple: #e8ded6;
+// ============================================================
+// Design tokens — canonical palette (see AGENTS.md)
+// Never hardcode hex elsewhere: consume these variables in SCSS
+// or the mirrored CSS custom properties in style.scss.
+// ============================================================
 
-$base-dark-purple-2: #3a2f5c;
-$base-purple-2: #6e5e9c;
-$base-purple-200-2: #c1a6c8;
-$base-pink-2: #f59061;
-$base-light-purple-2: #e8ded6;
+$color-periwinkle: #adb4e4; // Primary light — panels, buttons, hover surfaces
+$color-violet: #b43ce4;     // Accent — CTA, active states, highlights
+$color-midnight: #2b2e54;   // Dark base — body background, dark surfaces
+$color-navy: #12295f;       // Deep base — gradients, shadows, depth layers
+$color-slate: #626aa0;      // Secondary — muted text, borders, dividers
+$color-lavender: #9fa5d5;   // Soft neutral — secondary surfaces, disabled
 
-$base-black: #130c29;
-$base-white: #f3ecf7;
+// Neon palette (night mode) — approved for the neon restyle.
+// Role: glowing accents/borders/text for UI surfaces in dark theme.
+// Base surfaces stay midnight/navy so the neon reads as glow, not paint.
+$color-neon-pink: #ff007f;
+$color-neon-cyan: #00ffff;
+$color-neon-yellow: #ffff00;
+$color-neon-ultraviolet: #7f00ff;
 
 // Mixins
 @mixin centered {
