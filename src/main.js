@@ -440,6 +440,52 @@ if (!USE_BAKED_TEXTURES) {
   };
 }
 
+let roomBounds = null;
+
+const computeRoomBounds = (root) => {
+  const box = new THREE.Box3();
+  const temp = new THREE.Box3();
+  root.updateWorldMatrix(true, true);
+  root.traverse((object) => {
+    if (!object.isMesh || !object.geometry) return;
+    temp.setFromObject(object);
+    const size = temp.getSize(new THREE.Vector3());
+    // Ignore the oversized backdrop planes; keep the room contents.
+    if (size.x > 50 || size.y > 50 || size.z > 50) return;
+    box.union(temp);
+  });
+  return box;
+};
+
+// A) Center the sun target on the room (not the world origin) and B) refit the
+// directional shadow camera so shadows survive any sun distance.
+const fitSunShadowToBounds = (bounds) => {
+  const sun = unbakedLighting?.sun;
+  if (!sun || !bounds || bounds.isEmpty()) return;
+
+  const center = bounds.getCenter(new THREE.Vector3());
+  const size = bounds.getSize(new THREE.Vector3());
+  const radius = Math.max(size.x, size.y, size.z) * 0.5;
+  const margin = radius * 0.25 + 2;
+
+  sun.target.position.copy(center);
+  sun.target.updateMatrixWorld();
+
+  const distance = sun.position.distanceTo(center);
+  const shadowCamera = sun.shadow.camera;
+  const extent = radius * 1.5 + margin;
+
+  shadowCamera.left = -extent;
+  shadowCamera.right = extent;
+  shadowCamera.top = extent;
+  shadowCamera.bottom = -extent;
+  shadowCamera.near = 0.1;
+  shadowCamera.far = distance + radius + margin * 2;
+  shadowCamera.updateProjectionMatrix();
+
+  renderer.shadowMap.needsUpdate = true;
+};
+
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.minDistance = 5;
 controls.maxDistance = 45;
@@ -672,14 +718,25 @@ const setupCameraDebug = () => {
   };
 
   limitCheckbox.addEventListener("change", () => {
+    controls.debugIgnoreLimits = false;
     applyLimits(limitCheckbox.checked);
     controls.update();
+  });
+
+  // Manual edits in the "Posición"/"Target" groups are applied verbatim so
+  // changing one axis does not push the other vector through the orbit clamps.
+  // Limits come back as soon as the user orbits/pans/zooms again.
+  const beginFreeCameraEdit = () => {
+    controls.debugIgnoreLimits = true;
+  };
+  controls.addEventListener("start", () => {
+    controls.debugIgnoreLimits = false;
   });
 
   const fmt = (value) => Math.round(value * 1000) / 1000;
   const rows = [];
 
-  const makeGroup = (label, getVec, onChange) => {
+  const makeGroup = (label, getVec, onChange, onEditStart) => {
     const group = document.createElement("div");
     group.className = "cd-group";
 
@@ -709,11 +766,19 @@ const setupCameraDebug = () => {
       const setValue = (value) => {
         const parsed = Number(value);
         if (!Number.isFinite(parsed)) return;
+        if (onEditStart) onEditStart();
         getVec()[axis] = parsed;
         range.value = parsed;
         num.value = fmt(parsed);
         if (onChange) onChange();
       };
+
+      if (onEditStart) {
+        range.addEventListener("pointerdown", onEditStart);
+        range.addEventListener("focus", onEditStart);
+        num.addEventListener("pointerdown", onEditStart);
+        num.addEventListener("focus", onEditStart);
+      }
 
       range.addEventListener("input", () => setValue(range.value));
       num.addEventListener("input", () => setValue(num.value));
@@ -727,17 +792,23 @@ const setupCameraDebug = () => {
     panel.appendChild(group);
   };
 
-  makeGroup("Posición", () => camera.position, () => controls.update());
-  makeGroup("Target", () => controls.target, () => controls.update());
+  makeGroup(
+    "Posición",
+    () => camera.position,
+    () => controls.update(),
+    beginFreeCameraEdit
+  );
+  makeGroup(
+    "Target",
+    () => controls.target,
+    () => controls.update(),
+    beginFreeCameraEdit
+  );
 
   if (unbakedLighting?.sun) {
-    makeGroup(
-      "Sol",
-      () => unbakedLighting.sun.position,
-      () => {
-        renderer.shadowMap.needsUpdate = true;
-      }
-    );
+    makeGroup("Sol", () => unbakedLighting.sun.position, () => {
+      fitSunShadowToBounds(roomBounds);
+    });
   }
 
   if (unbakedLighting?.lamp) {
@@ -1074,7 +1145,7 @@ const setupCameraDebug = () => {
   cameraDebugUpdate(true);
 };
 
-const ENABLE_CAMERA_DEBUG = false;
+const ENABLE_CAMERA_DEBUG = true;
 
 if (import.meta.env.DEV && ENABLE_CAMERA_DEBUG) {
   setupCameraDebug();
@@ -2482,6 +2553,8 @@ loader.load(MODEL_PATH, (glb) => {
   scene.add(glb.scene);
 
   if (!USE_BAKED_TEXTURES) {
+    roomBounds = computeRoomBounds(glb.scene);
+    fitSunShadowToBounds(roomBounds);
     window.__portfolioDebug = { scene, glb, camera };
     renderer.shadowMap.autoUpdate = false;
     renderer.shadowMap.needsUpdate = true;

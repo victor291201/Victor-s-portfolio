@@ -818,11 +818,8 @@ ul {
 .ui-toggle-button {
   display: none;
   position: fixed;
-  top: 36px;
-  left: 50%;
-  // Independent from `transform` so hover/GSAP animations don't fight
-  // the horizontal centering.
-  translate: -50% 0;
+  top: 112px;
+  right: 48px;
   z-index: 2;
   cursor: pointer;
 
@@ -832,7 +829,8 @@ ul {
   }
 
   @include media.media("<=tablet") {
-    top: 30px;
+    top: 94px;
+    right: 18px;
   }
 }
 

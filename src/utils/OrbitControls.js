@@ -58,6 +58,11 @@ class OrbitControls extends Controls {
     // Sets the 3D cursor (similar to Blender), from which the maxTargetRadius takes effect
     this.cursor = new Vector3();
 
+    // When true, update() applies position/target verbatim, skipping distance,
+    // angle and pan clamps. Used by the camera debug panel so editing one value
+    // does not move the other.
+    this.debugIgnoreLimits = false;
+
     // How far you can dolly in and out ( PerspectiveCamera only )
     this.minDistance = 0;
     this.maxDistance = Infinity;
@@ -287,6 +292,12 @@ class OrbitControls extends Controls {
 
   update(deltaTime = null) {
     const position = this.object.position;
+    const ignoreLimits = this.debugIgnoreLimits === true;
+
+    if (ignoreLimits) {
+      this._sphericalDelta.set(0, 0, 0);
+      this._panOffset.set(0, 0, 0);
+    }
 
     _v.copy(position).sub(this.target);
 
@@ -296,7 +307,7 @@ class OrbitControls extends Controls {
     // angle from z-axis around y-axis
     this._spherical.setFromVector3(_v);
 
-    if (this.autoRotate && this.state === _STATE.NONE) {
+    if (!ignoreLimits && this.autoRotate && this.state === _STATE.NONE) {
       this._rotateLeft(this._getAutoRotationAngle(deltaTime));
     }
 
@@ -310,65 +321,71 @@ class OrbitControls extends Controls {
 
     // restrict theta to be between desired limits
 
-    let min = this.minAzimuthAngle;
-    let max = this.maxAzimuthAngle;
+    if (!ignoreLimits) {
+      let min = this.minAzimuthAngle;
+      let max = this.maxAzimuthAngle;
 
-    if (isFinite(min) && isFinite(max)) {
-      if (min < -Math.PI) min += _twoPI;
-      else if (min > Math.PI) min -= _twoPI;
+      if (isFinite(min) && isFinite(max)) {
+        if (min < -Math.PI) min += _twoPI;
+        else if (min > Math.PI) min -= _twoPI;
 
-      if (max < -Math.PI) max += _twoPI;
-      else if (max > Math.PI) max -= _twoPI;
+        if (max < -Math.PI) max += _twoPI;
+        else if (max > Math.PI) max -= _twoPI;
 
-      if (min <= max) {
-        this._spherical.theta = Math.max(
-          min,
-          Math.min(max, this._spherical.theta)
-        );
-      } else {
-        this._spherical.theta =
-          this._spherical.theta > (min + max) / 2
-            ? Math.max(min, this._spherical.theta)
-            : Math.min(max, this._spherical.theta);
+        if (min <= max) {
+          this._spherical.theta = Math.max(
+            min,
+            Math.min(max, this._spherical.theta)
+          );
+        } else {
+          this._spherical.theta =
+            this._spherical.theta > (min + max) / 2
+              ? Math.max(min, this._spherical.theta)
+              : Math.min(max, this._spherical.theta);
+        }
       }
-    }
 
-    // restrict phi to be between desired limits
-    this._spherical.phi = Math.max(
-      this.minPolarAngle,
-      Math.min(this.maxPolarAngle, this._spherical.phi)
-    );
+      // restrict phi to be between desired limits
+      this._spherical.phi = Math.max(
+        this.minPolarAngle,
+        Math.min(this.maxPolarAngle, this._spherical.phi)
+      );
+    }
 
     this._spherical.makeSafe();
 
-    // move target to panned location
+    if (!ignoreLimits) {
+      // move target to panned location
 
-    if (this.enableDamping === true) {
-      this.target.addScaledVector(this._panOffset, this.dampingFactor);
-    } else {
-      this.target.add(this._panOffset);
+      if (this.enableDamping === true) {
+        this.target.addScaledVector(this._panOffset, this.dampingFactor);
+      } else {
+        this.target.add(this._panOffset);
+      }
+      this.target.clamp(this.minPan, this.maxPan);
+
+      // Limit the target distance from the cursor to create a sphere around the center of interest
+      this.target.sub(this.cursor);
+      this.target.clampLength(this.minTargetRadius, this.maxTargetRadius);
+      this.target.add(this.cursor);
     }
-    this.target.clamp(this.minPan, this.maxPan);
-
-    // Limit the target distance from the cursor to create a sphere around the center of interest
-    this.target.sub(this.cursor);
-    this.target.clampLength(this.minTargetRadius, this.maxTargetRadius);
-    this.target.add(this.cursor);
 
     let zoomChanged = false;
     // adjust the camera position based on zoom only if we're not zooming to the cursor or if it's an ortho camera
     // we adjust zoom later in these cases
-    if (
-      (this.zoomToCursor && this._performCursorZoom) ||
-      this.object.isOrthographicCamera
-    ) {
-      this._spherical.radius = this._clampDistance(this._spherical.radius);
-    } else {
-      const prevRadius = this._spherical.radius;
-      this._spherical.radius = this._clampDistance(
-        this._spherical.radius * this._scale
-      );
-      zoomChanged = prevRadius != this._spherical.radius;
+    if (!ignoreLimits) {
+      if (
+        (this.zoomToCursor && this._performCursorZoom) ||
+        this.object.isOrthographicCamera
+      ) {
+        this._spherical.radius = this._clampDistance(this._spherical.radius);
+      } else {
+        const prevRadius = this._spherical.radius;
+        this._spherical.radius = this._clampDistance(
+          this._spherical.radius * this._scale
+        );
+        zoomChanged = prevRadius != this._spherical.radius;
+      }
     }
 
     _v.setFromSpherical(this._spherical);

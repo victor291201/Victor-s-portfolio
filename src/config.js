@@ -31,8 +31,8 @@ export const MODEL_PATH = MODEL_PATHS[RENDER_MODE];
 
 // Cámara para el cuarto sin bake (1.4x respecto al encuadre inicial).
 export const UNBAKED_CAMERA = {
-  position: [8.712, 17.593, -20.248],
-  target: [-14.8, -0.3, -47.7],
+  position: [9.799, 21.1, -25.902],
+  target: [-15.6, 0.9, -46.7],
 };
 
 
@@ -60,7 +60,7 @@ export const UNBAKED_ORBIT_LIMITS = {
 export const UNBAKED_LIGHTS = {
   // Rig original del proyecto (commit inicial); ajústalo en vivo con el
   // panel de debug de luces.
-  sunPosition: [18, 30, 12],
+  sunPosition: [59.5, 103.5, -21.1],
   sunColor: "#FFF1E0",
   hemisphereGround: "#6B5B6E",
   lamp: {
