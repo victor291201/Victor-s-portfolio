@@ -17,34 +17,53 @@ export const translations = {
 
     "use left/right click": "¡Usa clic izquierdo/derecho y la rueda del mouse para navegar!",
     "use one or two fingers": "¡Usa uno o dos dedos para navegar!",
+
     "~ My Work ~": "~ Mi trabajo ~",
-    "Community Leader": "Líder comunitario",
-    "Organized several events":
-      "Organicé varios eventos y actividades con comunidades y negocios locales para ayudar a estudiantes internacionales a familiarizarse con la cultura coreana.",
-    "Skills: Leadership":
-      "Habilidades: Liderazgo, Comunicación, Construcción de comunidad, Trabajo en equipo",
-    "During my piano teaching":
-      "Durante mi experiencia enseñando piano, creé MeloMochi, una herramienta de composición impulsada por IA que ayuda a los estudiantes a aprender teoría musical mediante la exploración práctica. Diseñé el sistema para generar ejercicios y piezas cortas de piano que se adaptan al nivel de cada estudiante, combinando mi experiencia como pianista con mis conocimientos de machine learning. Usando TensorFlow y pretty_midi, entrené modelos con repertorio clásico para crear ejercicios musicales que también trabajan retos técnicos específicos. La interfaz web que construí con React permite a los estudiantes interactuar con las piezas generadas, visualizar patrones e incluso modificarlos en tiempo real. Trabajar de cerca con mis estudiantes durante el desarrollo me ayudó a refinar el sistema para que realmente apoye su aprendizaje, haciendo la teoría musical más atractiva y práctica.",
-    "Skills: Music Generation":
-      "Habilidades: Generación musical, TensorFlow, pretty_midi, Aprendizaje adaptativo, React, Teoría musical, Diseño UX, ML generativo, Tecnología educativa, Web Audio API",
-    "PianoScope is my passion":
-      "PianoScope es mi proyecto personal que combina mi amor por el piano y el machine learning. Co-creé esta herramienta impulsada por IA con otros músicos para entender mejor nuestros patrones de interpretación. Usando deep learning y procesamiento de audio en Python y TensorFlow, el sistema analiza grabaciones para detectar matices en el tiempo, la dinámica y el pedal. Construí la interfaz de visualización interactiva con React, permitiendo a los intérpretes ver cómo evolucionan estos elementos.",
-    "Skills: Audio Processing":
-      "Habilidades: Procesamiento de audio, Análisis de señales, Machine learning, Visualización de datos, TensorFlow, React, Python, DSP (procesamiento digital de señales), Análisis de interpretación, Clasificación de audio",
+    "A selection of standout projects":
+      "Una selección de proyectos destacados que reflejan mi experiencia en el desarrollo corporativo, freelance y de investigación:",
+    "Corporate Web Platforms":
+      "Plataformas Web Corporativas & Servicios REST (KillaSoft)",
+    "Developed highly responsive":
+      "Desarrollo de interfaces web altamente responsivas y modulares utilizando Angular, HTML, CSS y JavaScript. Implementación de servicios backend robustos con Python y Django para asegurar una comunicación eficiente.",
+    "Technologies: Angular, Django":
+      "Tecnologías: Angular, Django, Python, TypeScript, DevOps (Termius, FileZilla).",
+    "Style & Component Library":
+      "Biblioteca de Estilos y Componentes (Bromus Software)",
+    "Designed and implemented a centralized":
+      "Diseño e implementación de una biblioteca de estilos centralizada basada en Bootstrap, CSS y Sass para optimizar el flujo de trabajo del equipo de desarrollo. Desarrollo de funcionalidades web con Angular bajo estándares de pruebas unitarias con Jest.",
+    "Technologies: Angular, Sass":
+      "Tecnologías: Angular, Sass, Bootstrap, TypeScript, Jest, Git.",
+    "Web Systems & Hybrid Apps":
+      "Sistemas Web y Aplicaciones Híbridas (SmartP S.A.S.)",
+    "Built complex web interfaces":
+      "Construcción de interfaces web complejas y lógica de negocio backend mediante PHP y Java (APIs REST). Desarrollo de aplicaciones móviles multiplataforma utilizando Flutter.",
+    "Technologies: Java":
+      "Tecnologías: Java, PHP, Flutter, Bootstrap, APIs REST.",
+    "Infrastructure & Websites":
+      "Infraestructura y Sitios Web (La Ingeniería del Agua S.A.S.)",
+    "Technical leadership":
+      "Liderazgo técnico en el diseño, desarrollo y administración de sitios corporativos personalizados y despliegue de soluciones en la nube de Microsoft Azure.",
+    "Technologies: WordPress":
+      "Tecnologías: WordPress, PHP, HTML/CSS, Microsoft Azure.",
+    "AI Language Detection Model":
+      "Modelo de Inteligencia Artificial para Detección de Idioma (Universidad del Magdalena)",
+    "Implemented Natural Language Processing":
+      "Implementación de algoritmos de Procesamiento de Lenguaje Natural (NLP) y modelos de Machine Learning (Árboles de decisión, Random Forest, Redes Neuronales Profundas) para la clasificación de textos.",
+    "Technologies: Python, TensorFlow, Keras":
+      "Tecnologías: Python, TensorFlow, Keras, Pandas, Jupyter Notebook.",
+    "100 Days of CSS Challenge": "Reto 100 Días de CSS (Proyecto Personal)",
+    "Ongoing challenge":
+      "Desafío continuo enfocado en el dominio avanzado de CSS, preprocesadores (Sass) y la experimentación con animaciones interactivas bidimensionales y tridimensionales mediante Three.js.",
+
     "~ About Me ~": "~ Sobre mí ~",
-    "Engineer, musician":
-      "Ingeniero, músico, creativo y gamer de corazón 💜",
-    "Hi, I'm Victor!":
-      "¡Hola, soy Victor! Me encanta combinar habilidades técnicas y creativas para construir cosas bonitas. Este es mi portafolio 3D interactivo, donde puedes explorar mi cuarto y conocerme mejor.",
-    "In my free time":
-      "En mi tiempo libre me encontrarás escuchando música, jugando y trabajando en proyectos creativos. También me gusta salir a caminar por mi barrio.",
-    "What I'm Up To:": "En qué estoy:",
-    "I'm currently building":
-      "Actualmente estoy creando experiencias web interactivas y escenas 3D.",
-    "I'm looking for opportunities":
-      "Busco oportunidades para colaborar en proyectos creativos de desarrollo.",
-    "I'm always learning":
-      "Siempre estoy aprendiendo nuevas herramientas de diseño, música y código.",
+    "Full Stack Developer with 4+":
+      "Desarrollador Full Stack con más de 4 años de experiencia",
+    "I'm Victor —":
+      "Desarrollador Full Stack con más de 4 años de experiencia transformando ideas en aplicaciones web y móviles escalables, eficientes y de alto rendimiento. Mi enfoque combina una sólida base técnica en ingeniería de software con un pensamiento analítico riguroso.",
+    "Graduated in Systems Engineering":
+      "Graduado en Ingeniería de Sistemas y actualmente complementando mi perfil con Ingeniería Industrial en la Universidad del Magdalena, poseo una visión integral que abarca tanto el desarrollo de código limpio (aplicando principios SOLID, patrones de diseño y arquitectura limpia) como la optimización de procesos y la gestión de proyectos.",
+    "I'm passionate about continuous learning":
+      "Me apasiona el aprendizaje continuo y la resolución de problemas complejos. Fuera del entorno de desarrollo, disfruto explorando áreas como la ciencia de datos, la inteligencia artificial, la matemática aplicada, así como la práctica de calisthenics y el baile.",
     "Portfolio credits":
       "Créditos e inspiración del portafolio:",
     "Music is called":
@@ -53,9 +72,12 @@ export const translations = {
       "Este portafolio se inspiró en los Room Portfolios de Bruno Simon y Rachel Wei, y en el arte de Denis Wipart y Nicky Blender.",
     "Also the piano":
       "¡Además, el piano de este portafolio funciona! Pulsa las teclas y toca una canción.",
-    "~ Say hello! ~": "~ ¡Saluda! ~",
-    "If you'd like to collaborate":
-      "Si quieres colaborar o simplemente saludar, ¡conectemos!",
+
+    "~ Contact ~": "~ Contacto ~",
+    "Got a project in mind":
+      "¿Tienes un proyecto en mente, una oportunidad laboral o simplemente quieres conectar? ¡Hablemos!",
+    "I'm always open to discussing":
+      "Siempre estoy abierto a discutir nuevas ideas y retos tecnológicos.",
   },
 
   pt: {
@@ -70,34 +92,54 @@ export const translations = {
 
     "use left/right click": "Use o clique esquerdo/direito e a roda do mouse para navegar!",
     "use one or two fingers": "Use um ou dois dedos para navegar!",
+
     "~ My Work ~": "~ Meu trabalho ~",
-    "Community Leader": "Líder comunitário",
-    "Organized several events":
-      "Organizei vários eventos e ações com comunidades e empresas locais para ajudar estudantes internacionais a se familiarizar com a cultura coreana.",
-    "Skills: Leadership":
-      "Habilidades: Liderança, Comunicação, Construção de comunidade, Trabalho em equipe",
-    "During my piano teaching":
-      "Durante minha jornada ensinando piano, criei o MeloMochi, uma ferramenta de composição com IA que ajuda os alunos a aprender teoria musical por meio da exploração prática. Projetei o sistema para gerar exercícios e pequenas peças de piano que se adaptam ao nível de cada aluno, combinando minha experiência como pianista com meus conhecimentos em machine learning. Usando TensorFlow e pretty_midi, treinei modelos com repertório clássico para criar exercícios musicais que também trabalham desafios técnicos específicos. A interface web que construí com React permite que os alunos interajam com as peças geradas, visualizem padrões e até os modifiquem em tempo real. Trabalhar de perto com meus alunos durante o desenvolvimento me ajudou a refinar o sistema para que ele realmente apoie o aprendizado, tornando a teoria musical mais envolvente e prática.",
-    "Skills: Music Generation":
-      "Habilidades: Geração musical, TensorFlow, pretty_midi, Aprendizagem adaptativa, React, Teoria musical, Design UX, ML generativo, Tecnologia educacional, Web Audio API",
-    "PianoScope is my passion":
-      "PianoScope é meu projeto pessoal que combina meu amor pelo piano e pelo machine learning. Co-criei esta ferramenta com IA com outros músicos para entender melhor nossos padrões de interpretação. Usando deep learning e processamento de áudio em Python e TensorFlow, o sistema analisa gravações para detectar nuances de tempo, dinâmica e pedal. Construí a interface de visualização interativa com React, permitindo que os intérpretes vejam como esses elementos evoluem.",
-    "Skills: Audio Processing":
-      "Habilidades: Processamento de áudio, Análise de sinais, Machine learning, Visualização de dados, TensorFlow, React, Python, DSP (processamento digital de sinais), Análise de performance, Classificação de áudio",
+    "A selection of standout projects":
+      "Uma seleção de projetos em destaque que refletem minha experiência em desenvolvimento corporativo, freelance e de pesquisa:",
+    "Corporate Web Platforms":
+      "Plataformas Web Corporativas & Serviços REST (KillaSoft)",
+    "Developed highly responsive":
+      "Desenvolvimento de interfaces web altamente responsivas e modulares usando Angular, HTML, CSS e JavaScript. Implementação de serviços backend robustos com Python e Django para garantir uma comunicação eficiente.",
+    "Technologies: Angular, Django":
+      "Tecnologias: Angular, Django, Python, TypeScript, DevOps (Termius, FileZilla).",
+    "Style & Component Library":
+      "Biblioteca de Estilos e Componentes (Bromus Software)",
+    "Designed and implemented a centralized":
+      "Concepção e implementação de uma biblioteca de estilos centralizada baseada em Bootstrap, CSS e Sass para otimizar o fluxo de trabalho da equipe de desenvolvimento. Desenvolvimento de funcionalidades web com Angular sob padrões de testes unitários com Jest.",
+    "Technologies: Angular, Sass":
+      "Tecnologias: Angular, Sass, Bootstrap, TypeScript, Jest, Git.",
+    "Web Systems & Hybrid Apps":
+      "Sistemas Web e Aplicações Híbridas (SmartP S.A.S.)",
+    "Built complex web interfaces":
+      "Construção de interfaces web complexas e lógica de negócio backend com PHP e Java (APIs REST). Desenvolvimento de aplicações móveis multiplataforma com Flutter.",
+    "Technologies: Java":
+      "Tecnologias: Java, PHP, Flutter, Bootstrap, APIs REST.",
+    "Infrastructure & Websites":
+      "Infraestrutura e Sites (La Ingeniería del Agua S.A.S.)",
+    "Technical leadership":
+      "Liderança técnica no design, desenvolvimento e administração de sites corporativos personalizados e implantação de soluções na nuvem Microsoft Azure.",
+    "Technologies: WordPress":
+      "Tecnologias: WordPress, PHP, HTML/CSS, Microsoft Azure.",
+    "AI Language Detection Model":
+      "Modelo de IA para Detecção de Idioma (Universidad del Magdalena)",
+    "Implemented Natural Language Processing":
+      "Implementação de algoritmos de Processamento de Linguagem Natural (NLP) e modelos de Machine Learning (Árvores de decisão, Random Forest, Redes Neurais Profundas) para classificação de textos.",
+    "Technologies: Python, TensorFlow, Keras":
+      "Tecnologias: Python, TensorFlow, Keras, Pandas, Jupyter Notebook.",
+    "100 Days of CSS Challenge":
+      "Desafio 100 Dias de CSS (Projeto Pessoal)",
+    "Ongoing challenge":
+      "Desafio contínuo focado no domínio avançado de CSS, pré-processadores (Sass) e experimentação com animações interativas bidimensionais e tridimensionais com Three.js.",
+
     "~ About Me ~": "~ Sobre mim ~",
-    "Engineer, musician":
-      "Engenheiro, músico, criativo e gamer de coração 💜",
-    "Hi, I'm Victor!":
-      "Olá, eu sou o Victor! Adoro combinar habilidades técnicas e criativas para construir coisas bonitas. Este é meu portfólio 3D interativo, onde você pode explorar meu quarto e me conhecer melhor.",
-    "In my free time":
-      "No meu tempo livre, você vai me encontrar ouvindo música, jogando e trabalhando em projetos criativos. Também gosto de caminhar pelo meu bairro.",
-    "What I'm Up To:": "No que estou trabalhando:",
-    "I'm currently building":
-      "Atualmente estou criando experiências web interativas e cenas 3D.",
-    "I'm looking for opportunities":
-      "Estou procurando oportunidades para colaborar em projetos criativos de desenvolvimento.",
-    "I'm always learning":
-      "Estou sempre aprendendo novas ferramentas de design, música e código.",
+    "Full Stack Developer with 4+":
+      "Desenvolvedor Full Stack com mais de 4 anos de experiência",
+    "I'm Victor —":
+      "Desenvolvedor Full Stack com mais de 4 anos de experiência transformando ideias em aplicações web e móveis escaláveis, eficientes e de alto desempenho. Minha abordagem combina uma base técnica sólida em engenharia de software com pensamento analítico rigoroso.",
+    "Graduated in Systems Engineering":
+      "Graduado em Engenharia de Sistemas e atualmente complementando meu perfil com Engenharia Industrial na Universidad del Magdalena, tenho uma visão integral que abrange tanto o desenvolvimento de código limpo (aplicando princípios SOLID, padrões de projeto e arquitetura limpa) quanto a otimização de processos e a gestão de projetos.",
+    "I'm passionate about continuous learning":
+      "Sou apaixonado por aprendizado contínuo e pela resolução de problemas complexos. Fora do desenvolvimento, gosto de explorar áreas como ciência de dados, inteligência artificial e matemática aplicada, além de praticar calistenia e dançar.",
     "Portfolio credits":
       "Créditos e inspiração do portfólio:",
     "Music is called":
@@ -106,9 +148,12 @@ export const translations = {
       "Este portfólio foi inspirado nos Room Portfolios de Bruno Simon e Rachel Wei, e na arte de Denis Wipart e Nicky Blender.",
     "Also the piano":
       "Além disso, o piano deste portfólio funciona! Toque as teclas e experimente uma música.",
-    "~ Say hello! ~": "~ Diga olá! ~",
-    "If you'd like to collaborate":
-      "Se você quiser colaborar ou apenas dizer olá, vamos nos conectar!",
+
+    "~ Contact ~": "~ Contato ~",
+    "Got a project in mind":
+      "Tem um projeto em mente, uma oportunidade de trabalho ou só quer conectar? Vamos conversar!",
+    "I'm always open to discussing":
+      "Estou sempre aberto a discutir novas ideias e desafios tecnológicos.",
   },
 
   en: {

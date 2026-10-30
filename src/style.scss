@@ -4,6 +4,49 @@
 @use "./styles/defaults.scss" as media;
 
 // ============================================================
+// Global design tokens (CSS custom properties)
+// Single source of truth for the whole UI: palette colors and fonts
+// live here as `--color-*` / `--font-*`. RGB channel variants
+// (`--color-*-rgb`) allow alpha glows via rgb(var(...) / a).
+// SCSS variables in styles/variables.scss remain the build-time
+// mirror used to generate these tokens.
+// ============================================================
+
+:root {
+  // Canonical palette
+  --color-periwinkle: #{vars.$color-periwinkle};
+  --color-violet: #{vars.$color-violet};
+  --color-midnight: #{vars.$color-midnight};
+  --color-navy: #{vars.$color-navy};
+  --color-slate: #{vars.$color-slate};
+  --color-lavender: #{vars.$color-lavender};
+
+  // Neon palette (night mode)
+  --color-neon-pink: #{vars.$color-neon-pink};
+  --color-neon-cyan: #{vars.$color-neon-cyan};
+  --color-neon-yellow: #{vars.$color-neon-yellow};
+  --color-neon-ultraviolet: #{vars.$color-neon-ultraviolet};
+
+  // RGB channels for alpha usage: rgb(var(--color-violet-rgb) / 0.75)
+  --color-periwinkle-rgb: #{vars.rgb-channels(vars.$color-periwinkle)};
+  --color-violet-rgb: #{vars.rgb-channels(vars.$color-violet)};
+  --color-midnight-rgb: #{vars.rgb-channels(vars.$color-midnight)};
+  --color-navy-rgb: #{vars.rgb-channels(vars.$color-navy)};
+  --color-slate-rgb: #{vars.rgb-channels(vars.$color-slate)};
+  --color-lavender-rgb: #{vars.rgb-channels(vars.$color-lavender)};
+  --color-neon-pink-rgb: #{vars.rgb-channels(vars.$color-neon-pink)};
+  --color-neon-cyan-rgb: #{vars.rgb-channels(vars.$color-neon-cyan)};
+  --color-neon-yellow-rgb: #{vars.rgb-channels(vars.$color-neon-yellow)};
+  --color-neon-ultraviolet-rgb: #{vars.rgb-channels(
+      vars.$color-neon-ultraviolet
+    )};
+
+  // Fonts
+  --font-display: #{vars.$font-display};
+  --font-body: #{vars.$font-body};
+}
+
+// ============================================================
 // Interface theming
 // Day (.light-theme)  -> only the three "Enter!" colors: Periwinkle, Slate,
 //   Midnight (no violet/lavender per user feedback).
@@ -13,45 +56,45 @@
 // ============================================================
 
 body.light-theme {
-  --ui-panel-bg: #{vars.$color-periwinkle};
+  --ui-panel-bg: var(--color-periwinkle);
   // Transparent placeholder keeps shadow lists valid in day mode.
-  --ui-glow-idle: 0 0 0 0 #{rgba(vars.$color-midnight, 0)};
-  --ui-surface: #{vars.$color-slate};
-  --ui-border: #{vars.$color-slate};
+  --ui-glow-idle: 0 0 0 0 rgb(var(--color-midnight-rgb) / 0);
+  --ui-surface: var(--color-slate);
+  --ui-border: var(--color-slate);
   --ui-border-width: 8px;
-  --ui-accent: #{vars.$color-midnight};
-  --ui-text: #{vars.$color-midnight};
-  --ui-text-strong: #{vars.$color-midnight};
-  --ui-icon: #{vars.$color-slate};
-  --ui-muted: #{rgba(vars.$color-periwinkle, 0.65)};
-  --ui-muted-hover: #{vars.$color-periwinkle};
-  --ui-overlay-bg: #{rgba(vars.$color-midnight, 0.35)};
-  --ui-panel-shadow: 0px 3px 8px #{rgba(vars.$color-midnight, 0.45)};
-  --ui-soft-shadow: 0px 3px 8px #{rgba(vars.$color-midnight, 0.45)};
+  --ui-accent: var(--color-midnight);
+  --ui-text: var(--color-midnight);
+  --ui-text-strong: var(--color-midnight);
+  --ui-icon: var(--color-slate);
+  --ui-muted: rgb(var(--color-periwinkle-rgb) / 0.65);
+  --ui-muted-hover: var(--color-periwinkle);
+  --ui-overlay-bg: rgb(var(--color-midnight-rgb) / 0.35);
+  --ui-panel-shadow: 0px 3px 8px rgb(var(--color-midnight-rgb) / 0.45);
+  --ui-soft-shadow: 0px 3px 8px rgb(var(--color-midnight-rgb) / 0.45);
   --ui-glow: none;
   --ui-image-glow: none;
   --ui-text-glow: none;
   --ui-icon-glow: none;
   --ui-title-glow: none;
-  --ui-scrollbar-track: #{rgba(vars.$color-slate, 0.2)};
-  --ui-scrollbar-thumb: #{vars.$color-midnight};
-  --ui-active-bg: #{vars.$color-periwinkle};
-  --ui-active-text: #{vars.$color-midnight};
+  --ui-scrollbar-track: rgb(var(--color-slate-rgb) / 0.2);
+  --ui-scrollbar-thumb: var(--color-midnight);
+  --ui-active-bg: var(--color-periwinkle);
+  --ui-active-text: var(--color-midnight);
   --ui-active-glow: none;
-  --ui-active-shadow: 0 0 0 0 #{rgba(vars.$color-midnight, 0)};
+  --ui-active-shadow: 0 0 0 0 rgb(var(--color-midnight-rgb) / 0);
   // Modal title = same midnight pill as the Enter! button.
-  --ui-title-bg: #{vars.$color-midnight};
-  --ui-title-text: #{vars.$color-periwinkle};
-  --ui-title-border: #{vars.$color-slate};
+  --ui-title-bg: var(--color-midnight);
+  --ui-title-text: var(--color-periwinkle);
+  --ui-title-border: var(--color-slate);
   // Day buttons follow the "Enter!" loading button: midnight pill, slate
   // border, periwinkle text, soft shadow.
-  --ui-btn-bg: #{vars.$color-midnight};
-  --ui-btn-border: #{vars.$color-slate};
-  --ui-btn-text: #{vars.$color-periwinkle};
-  --ui-bullet: #{vars.$color-midnight};
-  --ui-bullet-hover: #{vars.$color-slate};
-  --ui-loading-bg: #{vars.$color-midnight};
-  --ui-loading-text: #{vars.$color-periwinkle};
+  --ui-btn-bg: var(--color-midnight);
+  --ui-btn-border: var(--color-slate);
+  --ui-btn-text: var(--color-periwinkle);
+  --ui-bullet: var(--color-midnight);
+  --ui-bullet-hover: var(--color-slate);
+  --ui-loading-bg: var(--color-midnight);
+  --ui-loading-text: var(--color-periwinkle);
 }
 
 body.dark-theme {
@@ -61,56 +104,56 @@ body.dark-theme {
   // them. Border width stays 8px like day.
   --ui-panel-bg: transparent;
   --ui-surface: transparent;
-  --ui-border: #{vars.$color-violet};
+  --ui-border: var(--color-violet);
   --ui-border-width: 8px;
-  --ui-accent: #{vars.$color-neon-yellow};
-  --ui-text: #{vars.$color-neon-cyan};
-  --ui-text-strong: #{vars.$color-neon-cyan};
-  --ui-icon: #{vars.$color-neon-cyan};
-  --ui-muted: #{rgba(vars.$color-neon-cyan, 0.7)};
-  --ui-muted-hover: #{vars.$color-neon-yellow};
-  --ui-overlay-bg: #{rgba(vars.$color-navy, 0.55)};
-  --ui-panel-shadow: 0 0 16px #{rgba(vars.$color-violet, 0.75)},
-    0 0 46px #{rgba(vars.$color-neon-ultraviolet, 0.45)},
-    0 0 12px #{rgba(vars.$color-neon-cyan, 0.5)},
-    inset 0 0 26px #{rgba(vars.$color-neon-ultraviolet, 0.3)};
-  --ui-soft-shadow: 0 0 10px #{rgba(vars.$color-violet, 0.8)},
-    0 0 24px #{rgba(vars.$color-neon-ultraviolet, 0.45)};
+  --ui-accent: var(--color-neon-yellow);
+  --ui-text: var(--color-neon-cyan);
+  --ui-text-strong: var(--color-neon-cyan);
+  --ui-icon: var(--color-neon-cyan);
+  --ui-muted: rgb(var(--color-neon-cyan-rgb) / 0.7);
+  --ui-muted-hover: var(--color-neon-yellow);
+  --ui-overlay-bg: rgb(var(--color-navy-rgb) / 0.55);
+  --ui-panel-shadow: 0 0 16px rgb(var(--color-violet-rgb) / 0.75),
+    0 0 46px rgb(var(--color-neon-ultraviolet-rgb) / 0.45),
+    0 0 12px rgb(var(--color-neon-cyan-rgb) / 0.5),
+    inset 0 0 26px rgb(var(--color-neon-ultraviolet-rgb) / 0.3);
+  --ui-soft-shadow: 0 0 10px rgb(var(--color-violet-rgb) / 0.8),
+    0 0 24px rgb(var(--color-neon-ultraviolet-rgb) / 0.45);
   // Bright halo for floating controls (selector/toggles); the soft-shadow
   // alone gets swallowed by the 8px border + dark scene.
-  --ui-glow-idle: 0 0 18px 4px #{rgba(vars.$color-violet, 0.85)},
-    0 0 12px 2px #{rgba(vars.$color-neon-cyan, 0.55)},
-    0 0 55px 10px #{rgba(vars.$color-neon-ultraviolet, 0.6)};
-  --ui-glow: 0 0 12px #{rgba(vars.$color-violet, 0.8)},
-    0 0 28px #{rgba(vars.$color-neon-ultraviolet, 0.45)};
-  --ui-image-glow: 0 0 12px #{rgba(vars.$color-violet, 0.75)},
-    0 0 30px #{rgba(vars.$color-neon-ultraviolet, 0.4)};
-  --ui-text-glow: 0 0 8px #{rgba(vars.$color-neon-cyan, 0.6)},
-    0 0 18px #{rgba(vars.$color-neon-ultraviolet, 0.35)};
-  --ui-icon-glow: drop-shadow(0 0 6px #{rgba(vars.$color-neon-cyan, 0.9)})
-    drop-shadow(0 0 16px #{rgba(vars.$color-violet, 0.7)});
-  --ui-title-glow: 0 0 10px #{rgba(vars.$color-neon-cyan, 0.85)},
-    0 0 28px #{rgba(vars.$color-violet, 0.7)};
-  --ui-scrollbar-track: #{rgba(vars.$color-navy, 0.6)};
-  --ui-scrollbar-thumb: #{vars.$color-violet};
+  --ui-glow-idle: 0 0 18px 4px rgb(var(--color-violet-rgb) / 0.85),
+    0 0 12px 2px rgb(var(--color-neon-cyan-rgb) / 0.55),
+    0 0 55px 10px rgb(var(--color-neon-ultraviolet-rgb) / 0.6);
+  --ui-glow: 0 0 12px rgb(var(--color-violet-rgb) / 0.8),
+    0 0 28px rgb(var(--color-neon-ultraviolet-rgb) / 0.45);
+  --ui-image-glow: 0 0 12px rgb(var(--color-violet-rgb) / 0.75),
+    0 0 30px rgb(var(--color-neon-ultraviolet-rgb) / 0.4);
+  --ui-text-glow: 0 0 8px rgb(var(--color-neon-cyan-rgb) / 0.6),
+    0 0 18px rgb(var(--color-neon-ultraviolet-rgb) / 0.35);
+  --ui-icon-glow: drop-shadow(0 0 6px rgb(var(--color-neon-cyan-rgb) / 0.9))
+    drop-shadow(0 0 16px rgb(var(--color-violet-rgb) / 0.7));
+  --ui-title-glow: 0 0 10px rgb(var(--color-neon-cyan-rgb) / 0.85),
+    0 0 28px rgb(var(--color-violet-rgb) / 0.7);
+  --ui-scrollbar-track: rgb(var(--color-navy-rgb) / 0.6);
+  --ui-scrollbar-thumb: var(--color-violet);
   // Active language pill: lit-up violet fill + yellow glowing text.
-  --ui-active-bg: #{rgba(vars.$color-violet, 0.85)};
-  --ui-active-text: #{vars.$color-neon-yellow};
-  --ui-active-glow: 0 0 8px #{rgba(vars.$color-neon-yellow, 0.8)},
-    0 0 22px #{rgba(vars.$color-neon-yellow, 0.45)};
-  --ui-active-shadow: 0 0 14px 2px #{rgba(vars.$color-violet, 0.8)},
-    0 0 34px 8px #{rgba(vars.$color-neon-ultraviolet, 0.55)};
+  --ui-active-bg: rgb(var(--color-violet-rgb) / 0.85);
+  --ui-active-text: var(--color-neon-yellow);
+  --ui-active-glow: 0 0 8px rgb(var(--color-neon-yellow-rgb) / 0.8),
+    0 0 22px rgb(var(--color-neon-yellow-rgb) / 0.45);
+  --ui-active-shadow: 0 0 14px 2px rgb(var(--color-violet-rgb) / 0.8),
+    0 0 34px 8px rgb(var(--color-neon-ultraviolet-rgb) / 0.55);
   --ui-title-bg: transparent;
-  --ui-title-text: #{vars.$color-neon-cyan};
-  --ui-title-border: #{vars.$color-violet};
+  --ui-title-text: var(--color-neon-cyan);
+  --ui-title-border: var(--color-violet);
   // Night buttons: transparent neon outlines (glow carries the style).
   --ui-btn-bg: transparent;
-  --ui-btn-border: #{vars.$color-violet};
-  --ui-btn-text: #{vars.$color-neon-cyan};
-  --ui-bullet: #{vars.$color-neon-cyan};
-  --ui-bullet-hover: #{vars.$color-neon-yellow};
-  --ui-loading-bg: #{vars.$color-navy};
-  --ui-loading-text: #{vars.$color-neon-cyan};
+  --ui-btn-border: var(--color-violet);
+  --ui-btn-text: var(--color-neon-cyan);
+  --ui-bullet: var(--color-neon-cyan);
+  --ui-bullet-hover: var(--color-neon-yellow);
+  --ui-loading-bg: var(--color-navy);
+  --ui-loading-text: var(--color-neon-cyan);
 }
 
 // Cross-fade for every themed surface when day/night flips.
@@ -146,12 +189,12 @@ body.dark-theme {
 // Breathing glow for modal panels (night only).
 @keyframes neon-panel-pulse {
   from {
-    box-shadow: 0 0 14px #{rgba(vars.$color-violet, 0.6)},
-      0 0 38px #{rgba(vars.$color-neon-cyan, 0.35)};
+    box-shadow: 0 0 14px rgb(var(--color-violet-rgb) / 0.6),
+      0 0 38px rgb(var(--color-neon-cyan-rgb) / 0.35);
   }
   to {
-    box-shadow: 0 0 24px #{rgba(vars.$color-violet, 0.9)},
-      0 0 60px #{rgba(vars.$color-neon-cyan, 0.55)};
+    box-shadow: 0 0 24px rgb(var(--color-violet-rgb) / 0.9),
+      0 0 60px rgb(var(--color-neon-cyan-rgb) / 0.55);
   }
 }
 
@@ -191,13 +234,13 @@ body {
 // Text styles
 h1,
 h2 {
-  font-family: "Motley Forces";
+  font-family: var(--font-display);
 }
 
 p,
 ul,
 li {
-  font-family: "Shifty Notes";
+  font-family: var(--font-body);
 }
 
 ul {
@@ -257,23 +300,6 @@ ul {
 }
 
 .base-image {
-  height: 100%;
-  width: 100%;
-  border-radius: 24px;
-  object-fit: cover;
-  border: 6px solid var(--ui-border);
-  box-shadow: var(--ui-image-glow);
-  @include theme-fade;
-}
-
-.work-image-wrapper {
-  width: 100%;
-  height: 350px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-
-.work-base-image {
   height: 100%;
   width: 100%;
   border-radius: 24px;
@@ -452,13 +478,8 @@ ul {
 }
 
 .contact .modal-content {
-  height: 170px;
+  height: auto;
   overflow: visible;
-
-  @include media.media("<=tablet") {
-    overflow: visible;
-    height: 170px;
-  }
 }
 
 .modal-content-wrapper {
@@ -486,33 +507,11 @@ ul {
 }
 
 .work .modal-content-wrapper {
-  @include vars.centered;
-  flex-direction: row;
-  gap: 18px;
-  @include media.media("<=tablet") {
-    justify-content: space-between;
-    flex-direction: column;
-  }
-}
-
-.work-project {
-  padding-top: 16px;
-  @include vars.centered;
+  display: flex;
   flex-direction: column;
-  gap: 28px;
-  width: 80%;
-  justify-content: start;
-  height: 100%;
-  @include media.media("<=tablet") {
-    height: auto;
-    width: 100%;
-    padding-bottom: 24px;
-  }
-}
-
-.work-project-wrapper {
-  width: 100%;
-  height: auto;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 18px;
 }
 
 .contact .modal-content-wrapper {
@@ -601,11 +600,19 @@ ul {
   }
 }
 
-.instagram {
-  width: 63px;
-  height: 63px;
+.phone {
+  width: 60px;
+  height: 60px;
   &:hover {
-    transform: rotate(35deg) scale(1.3);
+    transform: rotate(-12deg) scale(1.3);
+  }
+}
+
+.codepen {
+  width: 60px;
+  height: 60px;
+  &:hover {
+    transform: scale(1.3);
   }
 }
 
@@ -686,14 +693,14 @@ ul {
 // Floating neon controls breathe like the modals do.
 @keyframes neon-outline-pulse {
   from {
-    box-shadow: 0 0 12px 2px #{rgba(vars.$color-violet, 0.65)},
-      0 0 8px 1px #{rgba(vars.$color-neon-cyan, 0.4)},
-      0 0 34px 6px #{rgba(vars.$color-neon-ultraviolet, 0.45)};
+    box-shadow: 0 0 12px 2px rgb(var(--color-violet-rgb) / 0.65),
+      0 0 8px 1px rgb(var(--color-neon-cyan-rgb) / 0.4),
+      0 0 34px 6px rgb(var(--color-neon-ultraviolet-rgb) / 0.45);
   }
   to {
-    box-shadow: 0 0 22px 5px #{rgba(vars.$color-violet, 0.95)},
-      0 0 14px 3px #{rgba(vars.$color-neon-cyan, 0.65)},
-      0 0 65px 12px #{rgba(vars.$color-neon-ultraviolet, 0.7)};
+    box-shadow: 0 0 22px 5px rgb(var(--color-violet-rgb) / 0.95),
+      0 0 14px 3px rgb(var(--color-neon-cyan-rgb) / 0.65),
+      0 0 65px 12px rgb(var(--color-neon-ultraviolet-rgb) / 0.7);
   }
 }
 
@@ -733,7 +740,7 @@ ul {
   border: none;
   background: transparent;
   color: var(--ui-btn-text);
-  font-family: "Motley Forces";
+  font-family: var(--font-display);
   font-size: 18px;
   padding: 4px 8px;
   border-radius: 0.6rem;
@@ -807,6 +814,48 @@ ul {
   }
 }
 
+// Show/hide page controls (language, mute, theme).
+.ui-toggle-button {
+  position: fixed;
+  top: 36px;
+  left: 50%;
+  // Independent from `transform` so hover/GSAP animations don't fight
+  // the horizontal centering.
+  translate: -50% 0;
+  z-index: 2;
+  cursor: pointer;
+
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  &:hover {
+    transform: rotate(-5deg) scale(1.2);
+  }
+
+  @include media.media("<=tablet") {
+    top: 30px;
+  }
+}
+
+.ui-svg {
+  width: 40px;
+  height: 40px;
+  stroke: var(--ui-btn-text);
+  filter: var(--ui-icon-glow);
+  @include theme-fade;
+  @include media.media("<=tablet") {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+.ui-hidden-svg {
+  display: none;
+}
+
+// Show/hide the dev camera & lighting debug panel.
+body.debug-hidden .camera-debug {
+  display: none;
+}
+
 .sm-font {
   font-size: 1.2rem;
 }
@@ -830,7 +879,7 @@ ul {
 }
 
 .loading-screen-button {
-  font-family: "Motley Forces";
+  font-family: var(--font-display);
   @include vars.centered;
   background-color: transparent;
   padding: 10px 40px;
@@ -848,7 +897,7 @@ ul {
 }
 
 .no-sound-button {
-  font-family: "Motley Forces";
+  font-family: var(--font-display);
   @include vars.centered;
   background-color: transparent;
   border: none;
@@ -877,7 +926,7 @@ ul {
   width: 90%;
   font-size: 28px;
   transform: translate(-50%, -50%);
-  font-family: "Shifty Notes";
+  font-family: var(--font-body);
   color: var(--ui-loading-text);
   text-shadow: var(--ui-text-glow);
   @include theme-fade;

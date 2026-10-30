@@ -95,6 +95,7 @@ Usage rules:
 - Pair Violet only against Periwinkle/Lavender/Midnight/Navy — it fails AA contrast on white.
 - Body text on light surfaces → Midnight; on dark surfaces → Periwinkle or Lavender.
 - `src/styles/variables.scss` now holds only the canonical + neon tokens above (`$base-*` legacy variables were migrated in the 2026-10 neon restyle). `src/config.js` exports `UI_PALETTE`, the JS mirror of these tokens for inline styles and Three.js materials.
+- Global CSS custom properties are emitted in `:root` at the top of `src/style.scss`: `--color-*` (palette), `--color-*-rgb` (space-separated RGB channels for alpha glows, e.g. `rgb(var(--color-violet-rgb) / 0.75)`), and `--font-display` / `--font-body` (Motley Forces / Shifty Notes). SCSS variables generate these tokens — always reference the CSS variables (or `var(--ui-*)` theme vars) in rules, never raw hex or font strings.
 - New colors require user approval and a documented role in this table.
 
 ## Work Methodology

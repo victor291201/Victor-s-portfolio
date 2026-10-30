@@ -1,3 +1,5 @@
+@use "sass:color";
+
 // ============================================================
 // Design tokens — canonical palette (see AGENTS.md)
 // Never hardcode hex elsewhere: consume these variables in SCSS
@@ -18,6 +20,20 @@ $color-neon-pink: #ff007f;
 $color-neon-cyan: #00ffff;
 $color-neon-yellow: #ffff00;
 $color-neon-ultraviolet: #7f00ff;
+
+// Fonts
+$font-display: "Motley Forces"; // h1/h2, buttons, titles
+$font-body: "Shifty Notes";     // paragraphs, lists, instructions
+
+// Returns "r g b" channels of a color, so CSS can do:
+// rgb(var(--color-violet-rgb) / 0.75)
+@function rgb-channels($color) {
+  @return "#{color.channel($color, 'red', $space: rgb)} #{color.channel(
+      $color,
+      'green',
+      $space: rgb
+    )} #{color.channel($color, 'blue', $space: rgb)}";
+}
 
 // Mixins
 @mixin centered {

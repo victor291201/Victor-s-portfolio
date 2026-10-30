@@ -2973,6 +2973,66 @@ themeToggleButton.addEventListener(
   { passive: false }
 );
 
+// Debug panel (camera/sun/lights) visibility toggle. The panel only exists
+// in dev with ENABLE_CAMERA_DEBUG; keep the button hidden when it isn't there.
+const uiToggleButton = document.querySelector(".ui-toggle-button");
+const cameraDebugPanel = document.querySelector(".camera-debug");
+const uiVisibleSvg = document.querySelector(".ui-visible-svg");
+const uiHiddenSvg = document.querySelector(".ui-hidden-svg");
+
+if (cameraDebugPanel) {
+  uiToggleButton.style.display = "block";
+} else {
+  uiToggleButton.style.display = "none";
+}
+
+const handleUiToggle = (e) => {
+  e.preventDefault();
+
+  const hidden = document.body.classList.toggle("debug-hidden");
+  uiVisibleSvg.style.display = hidden ? "none" : "block";
+  uiHiddenSvg.style.display = hidden ? "block" : "none";
+  buttonSounds.click.play();
+
+  gsap.to(uiToggleButton, {
+    rotate: 45,
+    scale: 5,
+    duration: 0.5,
+    ease: "back.out(2)",
+    onStart: () => {
+      gsap.to(uiToggleButton, {
+        rotate: 0,
+        scale: 1,
+        duration: 0.5,
+        ease: "back.out(2)",
+        onComplete: () => {
+          gsap.set(uiToggleButton, {
+            clearProps: "transform",
+          });
+        },
+      });
+    },
+  });
+};
+
+uiToggleButton.addEventListener(
+  "click",
+  (e) => {
+    if (touchHappened) return;
+    handleUiToggle(e);
+  },
+  { passive: false }
+);
+
+uiToggleButton.addEventListener(
+  "touchend",
+  (e) => {
+    touchHappened = true;
+    handleUiToggle(e);
+  },
+  { passive: false }
+);
+
 /**  -------------------------- Render and Animations Stuff -------------------------- */
 const clock = new THREE.Clock();
 

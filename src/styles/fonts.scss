@@ -1,5 +1,7 @@
+@use "variables" as vars;
+
 @font-face {
-  font-family: "Shifty Notes";
+  font-family: #{vars.$font-body};
   src: url("/fonts/ShiftyNotes-Regular.woff2") format("woff2"),
     url("/fonts/ShiftyNotes-Regular.woff") format("woff");
   font-weight: normal;
@@ -8,7 +10,7 @@
 }
 
 @font-face {
-  font-family: "Motley Forces";
+  font-family: #{vars.$font-display};
   src: url("/fonts/MotleyForces-Regular.woff2") format("woff2"),
     url("/fonts/MotleyForces-Regular.woff") format("woff");
   font-weight: normal;
