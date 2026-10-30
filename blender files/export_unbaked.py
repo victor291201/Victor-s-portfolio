@@ -66,6 +66,15 @@ if duplicate_wall:
     bpy.data.objects.remove(duplicate_wall, do_unlink=True)
     print("REMOVED pared1_third")
 
+# The old baked-room shell lives as an orphan object (no collection) at the
+# origin. It is not part of the unbaked room (the Set* collections) and used to
+# leak into the export as a stray wall with a window hole. Remove it before the
+# bake pass so ensure_in_view_layer() cannot relink and bake it.
+stray_shell = bpy.data.objects.get("Cube")
+if stray_shell and not stray_shell.users_collection:
+    bpy.data.objects.remove(stray_shell, do_unlink=True)
+    print("REMOVED orphan Cube")
+
 # Keep the blank white poster that sits between the computer furniture and
 # the smaller posters on the right wall.
 blank_poster = bpy.data.objects.get("poster8_third.001")
