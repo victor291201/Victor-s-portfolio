@@ -154,7 +154,7 @@ The render mode is selected in `src/config.js` via `RENDER_MODE`:
 - **Lighting/camera debug panel** (`setupCameraDebug`, enabled via `ENABLE_CAMERA_DEBUG` in dev only): sliders for camera, sun & lamp position, day/night intensities, sun/lamp/background colors, exposure. "Copiar luces" outputs the `UNBAKED_LIGHTS` snippet to paste back into `config.js`. The sun rig uses the project's original values (`sunPosition [18, 30, 12]`, `sunColor #FFF1E0`, day `0.9/0.9/2.4/12`).
 
 ### 5. Audio
-- Background music: `.ogg` (known iPhone/Safari compatibility issue — see Known Issues).
+- Background music: 3-track `.mp3` playlist (`public/audio/music/`, `MUSIC_TRACKS` in `main.js`). A random track plays (never the same as the current one) and on end the next is chained with fade-out → fade-in (1.5s).
 - Piano: 24 individual `.ogg` files mapped to keyboard keys via `pianoKeyMap`.
 - Click SFX: `bubble.ogg`.
 - Background music fades out when piano is played (2s debounce), fades back in after inactivity.

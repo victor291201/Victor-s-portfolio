@@ -40,6 +40,66 @@ let loadingState = "loading";
 
 const normalizeText = (text) => text.replace(/\s+/g, " ").trim();
 
+// Póster del cuarto: el arte cambia según el idioma activo.
+const POSTER_TEXTURE_PATHS = {
+  es: "/images/poster_neon_español.png",
+  en: "/images/poster_neon_ingles.png",
+  pt: "/images/poster_neon_portuges.png",
+};
+const posterTextureCache = new Map();
+let posterMaterial = null;
+let posterLanguage = DEFAULT_LANGUAGE;
+let posterTextureRequest = 0;
+
+const applyPosterTexture = (texture) => {
+  if (!posterMaterial) return;
+  posterMaterial.map = texture;
+  posterMaterial.emissiveMap = texture;
+  posterMaterial.color.set(0xffffff);
+  posterMaterial.emissive.set(0xffffff);
+  posterMaterial.needsUpdate = true;
+};
+
+const setPosterLanguage = (language) => {
+  posterLanguage = SUPPORTED_LANGUAGES.includes(language)
+    ? language
+    : DEFAULT_LANGUAGE;
+
+  // El póster aún no existe (el modelo no ha cargado): se aplica al crearse.
+  if (!posterMaterial) return;
+
+  const path =
+    POSTER_TEXTURE_PATHS[posterLanguage] ?? POSTER_TEXTURE_PATHS.es;
+  const request = ++posterTextureRequest;
+  const cached = posterTextureCache.get(path);
+
+  if (cached) {
+    applyPosterTexture(cached);
+    return;
+  }
+
+  textureLoader.load(
+    path,
+    (texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      // Convención glTF del resto de posters: sin flip vertical.
+      texture.flipY = false;
+      posterTextureCache.set(path, texture);
+
+      if (request === posterTextureRequest) {
+        applyPosterTexture(texture);
+      }
+    },
+    undefined,
+    () => {
+      console.warn(
+        `[portfolio] No se encontró el póster para "${posterLanguage}" (${path})`
+      );
+    }
+  );
+};
+
 const translate = (key) =>
   translations[currentLanguage]?.[key] ??
   translations.en[key] ??
@@ -141,6 +201,8 @@ const applyLanguage = (language) => {
   languageButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.lang === language);
   });
+
+  setPosterLanguage(language);
 };
 
 languageButtons.forEach((button) => {
@@ -154,34 +216,97 @@ applyLanguage(currentLanguage);
 
 /**  -------------------------- Audio setup -------------------------- */
 
-// Background Music
+// Background Music — playlist de 3 pistas; al terminar una suena otra
+// aleatoria (sin repetir la actual) con fade-out → fade-in.
 let pianoDebounceTimer = null;
 let isMusicFaded = false;
 const MUSIC_FADE_TIME = 500;
+const TRACK_FADE_IN_TIME = 1500;
 const PIANO_TIMEOUT = 2000;
 const BACKGROUND_MUSIC_VOLUME = 1;
 const FADED_VOLUME = 0;
 
-const backgroundMusic = new Howl({
-  src: ["/audio/music/cosmic_candy.ogg"],
-  loop: true,
-  volume: 1,
-});
+const MUSIC_TRACKS = [
+  "/audio/music/bransboynd-retro-game-402454.mp3",
+  "/audio/music/businessstar-video-game-contest-4k-music-388415.mp3",
+  "/audio/music/hitslab-retro-arcade-game-music-396890.mp3",
+];
+
+let currentMusic = null;
+let currentTrackIndex = -1;
+
+const musicTargetVolume = () =>
+  isMuted || isMusicFaded ? FADED_VOLUME : BACKGROUND_MUSIC_VOLUME;
+
+const pickRandomTrackIndex = (excludeIndex) => {
+  if (MUSIC_TRACKS.length <= 1) return 0;
+
+  let next = Math.floor(Math.random() * MUSIC_TRACKS.length);
+  while (next === excludeIndex) {
+    next = Math.floor(Math.random() * MUSIC_TRACKS.length);
+  }
+  return next;
+};
+
+const playTrack = (index) => {
+  currentTrackIndex = index;
+  const track = new Howl({
+    src: [MUSIC_TRACKS[index]],
+    loop: false,
+    volume: 0,
+    onend: () => {
+      if (currentMusic === track) {
+        playNextTrack();
+      }
+    },
+  });
+  currentMusic = track;
+  track.play();
+  track.fade(FADED_VOLUME, musicTargetVolume(), TRACK_FADE_IN_TIME);
+};
+
+const playNextTrack = () => {
+  const previous = currentMusic;
+  const nextIndex = pickRandomTrackIndex(currentTrackIndex);
+  const startNext = () => {
+    if (previous) {
+      previous.stop();
+      previous.unload();
+    }
+    playTrack(nextIndex);
+  };
+
+  if (previous && previous.playing()) {
+    // Baja el volumen de la pista actual y luego sube la siguiente.
+    previous.fade(previous.volume(), FADED_VOLUME, MUSIC_FADE_TIME);
+    setTimeout(startNext, MUSIC_FADE_TIME + 100);
+  } else {
+    startNext();
+  }
+};
+
+const startBackgroundMusic = () => {
+  if (currentMusic && currentMusic.playing()) return;
+
+  if (currentMusic) {
+    // La pista actual ya terminó: encadenar la siguiente.
+    playNextTrack();
+    return;
+  }
+
+  playTrack(pickRandomTrackIndex(-1));
+};
 
 const fadeOutBackgroundMusic = () => {
-  if (!isMuted && !isMusicFaded) {
-    backgroundMusic.fade(
-      backgroundMusic.volume(),
-      FADED_VOLUME,
-      MUSIC_FADE_TIME
-    );
+  if (!isMuted && !isMusicFaded && currentMusic) {
+    currentMusic.fade(currentMusic.volume(), FADED_VOLUME, MUSIC_FADE_TIME);
     isMusicFaded = true;
   }
 };
 
 const fadeInBackgroundMusic = () => {
-  if (!isMuted && isMusicFaded) {
-    backgroundMusic.fade(
+  if (!isMuted && isMusicFaded && currentMusic) {
+    currentMusic.fade(
       FADED_VOLUME,
       BACKGROUND_MUSIC_VOLUME,
       MUSIC_FADE_TIME
@@ -1149,7 +1274,7 @@ manager.onLoad = function () {
       soundOnSvg.style.display = "none";
       soundOffSvg.style.display = "block";
     } else {
-      backgroundMusic.play();
+      startBackgroundMusic();
     }
 
     playReveal();
@@ -2491,6 +2616,7 @@ function createDelayedHitboxes() {
   objectsNeedingHitboxes.length = 0;
 
   createNeonPosterButtons();
+  addDecorHoverEffects();
 }
 
 /** Neón poster (antes blank poster8_third.001): textura emissive + 3 zonas
@@ -2516,20 +2642,17 @@ function createNeonPosterButtons() {
     return;
   }
 
-  const posterTexture = textureLoader.load("/images/poster_neon.jpg");
-  posterTexture.colorSpace = THREE.SRGBColorSpace;
-  posterTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
-  // Convención glTF del resto de posters: sin flip vertical.
-  posterTexture.flipY = false;
-
-  const posterMaterial = new THREE.MeshStandardMaterial({
-    map: posterTexture,
+  posterMaterial = new THREE.MeshStandardMaterial({
     roughness: 0.85,
     metalness: 0,
-    emissive: new THREE.Color(0xffffff),
-    emissiveMap: posterTexture,
-    emissiveIntensity: 0.8,
+    // Sin textura todavía: negro hasta que cargue el arte del idioma.
+    color: new THREE.Color(0x000000),
+    emissive: new THREE.Color(0x000000),
+    // Letras claras: el poster se auto-ilumina y esquiva el tone mapping
+    // para que el texto conserve brillo y contraste reales.
+    emissiveIntensity: 1.4,
   });
+  posterMaterial.toneMapped = false;
   posterMesh.traverse((node) => {
     if (node.isMesh) {
       node.material = posterMaterial;
@@ -2537,6 +2660,71 @@ function createNeonPosterButtons() {
       node.receiveShadow = false;
     }
   });
+
+  // El GLB original usaba un trozo del atlas de la pared (UV 0.164–0.826),
+  // así que aplicar una textura propia recortaba/estiraba el arte. Remapeamos
+  // la cara grande a UV 0–1 y dejamos las aristas con el color del fondo.
+  const posterUVMeshes = [];
+  posterMesh.traverse((node) => {
+    if (node.isMesh && node.geometry?.attributes?.uv) {
+      posterUVMeshes.push(node);
+    }
+  });
+
+  if (posterUVMeshes.length > 0) {
+    let faceMesh = posterUVMeshes[0];
+    let faceArea = -1;
+
+    posterUVMeshes.forEach((mesh) => {
+      const uv = mesh.geometry.attributes.uv;
+      let minU = Infinity;
+      let maxU = -Infinity;
+      let minV = Infinity;
+      let maxV = -Infinity;
+
+      for (let i = 0; i < uv.count; i++) {
+        minU = Math.min(minU, uv.getX(i));
+        maxU = Math.max(maxU, uv.getX(i));
+        minV = Math.min(minV, uv.getY(i));
+        maxV = Math.max(maxV, uv.getY(i));
+      }
+
+      mesh.userData.posterUVBounds = { minU, maxU, minV, maxV };
+
+      const area = (maxU - minU) * (maxV - minV);
+      if (area > faceArea) {
+        faceArea = area;
+        faceMesh = mesh;
+      }
+    });
+
+    const { minU, maxU, minV, maxV } = faceMesh.userData.posterUVBounds;
+    const faceUV = faceMesh.geometry.attributes.uv;
+    const spanU = maxU - minU || 1;
+    const spanV = maxV - minV || 1;
+
+    for (let i = 0; i < faceUV.count; i++) {
+      faceUV.setXY(
+        i,
+        (faceUV.getX(i) - minU) / spanU,
+        (faceUV.getY(i) - minV) / spanV
+      );
+    }
+    faceUV.needsUpdate = true;
+
+    // Caras laterales (grosor del póster): muestran el fondo oscuro del arte.
+    posterUVMeshes.forEach((mesh) => {
+      if (mesh === faceMesh) return;
+      const sideUV = mesh.geometry.attributes.uv;
+      for (let i = 0; i < sideUV.count; i++) {
+        sideUV.setXY(i, 0.02, 0.02);
+      }
+      sideUV.needsUpdate = true;
+    });
+  }
+
+  // Carga el arte correspondiente al idioma activo (y en cada cambio).
+  setPosterLanguage(posterLanguage);
 
   const bounds = new THREE.Box3().setFromObject(posterMesh);
   const size = bounds.getSize(new THREE.Vector3());
@@ -2557,16 +2745,16 @@ function createNeonPosterButtons() {
     visible: false,
   });
 
-  // Centros verticales (desde el borde inferior) de los 3 botones del arte
-  // de 682x961: TRABAJO y=522, ACERCA y=660, CONTACTO y=782.
+  // Centros verticales (desde el borde inferior) del arte 727x1024:
+  // TRABAJO y=277, ACERCA DE MÍ y=510, CONTACTO y=737.
   [
-    { name: "NeonPosterWork_Button_Pointer", frac: 0.457 },
-    { name: "NeonPosterAbout_Button_Pointer", frac: 0.313 },
-    { name: "NeonPosterContact_Button_Pointer", frac: 0.186 },
+    { name: "NeonPosterWork_Button_Pointer", frac: 0.729 },
+    { name: "NeonPosterAbout_Button_Pointer", frac: 0.502 },
+    { name: "NeonPosterContact_Button_Pointer", frac: 0.28 },
   ].forEach(({ name, frac }) => {
     const dims = size.clone();
-    dims.setComponent(widthAxis, size.getComponent(widthAxis) * 0.72);
-    dims.setComponent(heightAxis, size.y * 0.125);
+    dims.setComponent(widthAxis, size.getComponent(widthAxis) * 0.88);
+    dims.setComponent(heightAxis, size.y * 0.19);
     dims.setComponent(thicknessAxis, size.getComponent(thicknessAxis) + 0.6);
 
     const hitbox = new THREE.Mesh(
@@ -2586,7 +2774,289 @@ function createNeonPosterButtons() {
     hitboxToObjectMap.set(hitbox, hitbox);
   });
 
+  // --- Destellos sutiles: reflejo que barre el póster + chispas ---
+  const halfThickness = size.getComponent(thicknessAxis) / 2;
+  const faceSign =
+    camera.position.clone().sub(center).getComponent(thicknessAxis) >= 0
+      ? 1
+      : -1;
+  const posterWidth = size.getComponent(widthAxis);
+  const posterHeight = size.y;
+
+  const placeOnPosterFace = (object, offset) => {
+    object.position.copy(center);
+    object.position.setComponent(
+      thicknessAxis,
+      center.getComponent(thicknessAxis) + faceSign * offset
+    );
+    if (thicknessAxis === 0) {
+      object.rotation.y = (faceSign * Math.PI) / 2;
+    } else if (faceSign < 0) {
+      object.rotation.y = Math.PI;
+    }
+  };
+
+  // Reflejo: banda diagonal blanca muy tenue que recorre el arte.
+  const sheenCanvas = document.createElement("canvas");
+  sheenCanvas.width = 256;
+  sheenCanvas.height = 384;
+  const sheenCtx = sheenCanvas.getContext("2d");
+  const sheenGradient = sheenCtx.createLinearGradient(0, 0, 256, 384);
+  sheenGradient.addColorStop(0, "rgba(255, 255, 255, 0)");
+  sheenGradient.addColorStop(0.26, "rgba(255, 255, 255, 0)");
+  sheenGradient.addColorStop(0.5, "rgba(255, 255, 255, 0.45)");
+  sheenGradient.addColorStop(0.74, "rgba(255, 255, 255, 0)");
+  sheenGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+  sheenCtx.fillStyle = sheenGradient;
+  sheenCtx.fillRect(0, 0, 256, 384);
+
+  const sheenTexture = new THREE.CanvasTexture(sheenCanvas);
+  sheenTexture.colorSpace = THREE.SRGBColorSpace;
+
+  const sheenMaterial = new THREE.MeshBasicMaterial({
+    map: sheenTexture,
+    transparent: true,
+    opacity: 0.4,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    toneMapped: false,
+  });
+
+  const sheenPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(posterWidth, posterHeight),
+    sheenMaterial
+  );
+  placeOnPosterFace(sheenPlane, halfThickness + 0.03);
+  sheenPlane.name = "NeonPoster_Sheen";
+  // Se ancla al póster: así crece junto con él en el hover y mantiene el
+  // reflejo alineado con el arte.
+  posterMesh.attach(sheenPlane);
+
+  // El reflejo cruza el póster en diagonal (abajo-derecha → arriba-izquierda)
+  // cada 5 s; el resto del tiempo solo se ven los destellos.
+  gsap.fromTo(
+    sheenTexture.offset,
+    { x: -0.8, y: 0.8 },
+    {
+      x: 0.8,
+      y: -0.8,
+      duration: 1.6,
+      ease: "power1.inOut",
+      repeat: -1,
+      repeatDelay: 3.4,
+    }
+  );
+
+  // Chispas: destellos de 4 puntas y puntos suaves que aparecen pequeños,
+  // crecen, giran suavemente, se apagan y reaparecen en otro lugar.
+  const makeSparkleTexture = (star) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext("2d");
+    ctx.translate(64, 64);
+
+    const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 56);
+    glow.addColorStop(0, "rgba(255, 255, 255, 1)");
+    glow.addColorStop(0.3, "rgba(255, 255, 255, 0.45)");
+    glow.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(0, 0, 56, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (star) {
+      const flare = (angle, length, width, alpha) => {
+        ctx.save();
+        ctx.rotate(angle);
+        const gradient = ctx.createLinearGradient(-length, 0, length, 0);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0)");
+        gradient.addColorStop(0.5, `rgba(255, 255, 255, ${alpha})`);
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(-length, 0);
+        ctx.quadraticCurveTo(0, -width, length, 0);
+        ctx.quadraticCurveTo(0, width, -length, 0);
+        ctx.fill();
+        ctx.restore();
+      };
+      flare(0, 62, 8, 0.95);
+      flare(Math.PI / 2, 62, 8, 0.95);
+      flare(Math.PI / 4, 34, 4.5, 0.7);
+      flare(-Math.PI / 4, 34, 4.5, 0.7);
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  };
+
+  const starSparkTexture = makeSparkleTexture(true);
+  const dotSparkTexture = makeSparkleTexture(false);
+
+  const spawnSparkle = (spark) => {
+    const worldPosition = center.clone();
+    worldPosition.setComponent(
+      widthAxis,
+      center.getComponent(widthAxis) +
+        (Math.random() - 0.5) * posterWidth * 0.78
+    );
+    worldPosition.y =
+      center.y + (Math.random() - 0.5) * posterHeight * 0.78;
+    worldPosition.setComponent(
+      thicknessAxis,
+      center.getComponent(thicknessAxis) + faceSign * (halfThickness + 0.06)
+    );
+    // Los destellos cuelgan del póster: posición en su espacio local.
+    spark.position.copy(posterMesh.worldToLocal(worldPosition));
+    spark.material.rotation = Math.random() * Math.PI * 2;
+  };
+
+  const SPARK_COUNT = 8;
+  for (let i = 0; i < SPARK_COUNT; i += 1) {
+    const isStar = i % 2 === 0;
+    const sparkMaterial = new THREE.SpriteMaterial({
+      map: isStar ? starSparkTexture : dotSparkTexture,
+      transparent: true,
+      opacity: 0,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    const spark = new THREE.Sprite(sparkMaterial);
+    const baseSize =
+      posterWidth * (isStar ? 0.11 : 0.04) * (0.8 + Math.random() * 0.6);
+    spark.name = `NeonPoster_Spark_${i}`;
+    // Anclado al póster para que crezca con él en el hover.
+    posterMesh.attach(spark);
+    spawnSparkle(spark);
+
+    const loopSparkle = () => {
+      spawnSparkle(spark);
+      const spin =
+        (Math.PI / 2 + Math.random() * Math.PI) *
+        (Math.random() < 0.5 ? -1 : 1);
+
+      gsap
+        .timeline()
+        .fromTo(
+          spark.scale,
+          { x: baseSize * 0.12, y: baseSize * 0.12, z: 1 },
+          {
+            x: baseSize,
+            y: baseSize,
+            z: 1,
+            duration: 0.75,
+            ease: "sine.out",
+          },
+          0
+        )
+        .fromTo(
+          sparkMaterial,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.25 },
+          0
+        )
+        .to(
+          sparkMaterial,
+          { rotation: `+=${spin}`, duration: 1.15, ease: "sine.inOut" },
+          0
+        )
+        .to(
+          sparkMaterial,
+          { opacity: 0, duration: 0.5, ease: "sine.in" },
+          0.85
+        )
+        .to(
+          spark.scale,
+          {
+            x: baseSize * 1.35,
+            y: baseSize * 1.35,
+            z: 1,
+            duration: 0.5,
+            ease: "sine.in",
+          },
+          0.85
+        )
+        .call(loopSparkle, null, `+=${1 + Math.random() * 3}`);
+    };
+
+    gsap.delayedCall(Math.random() * 3, loopSparkle);
+  }
+
+  // Respiración muy leve del brillo propio del arte.
+  gsap.to(posterMaterial, {
+    emissiveIntensity: 1.55,
+    duration: 4,
+    yoyo: true,
+    repeat: -1,
+    ease: "sine.inOut",
+  });
+
+  // --- Hover en todo el poster: agranda la malla real (hitbox estático) ---
+  posterMesh.userData.initialScale = new THREE.Vector3().copy(
+    posterMesh.scale
+  );
+  posterMesh.userData.initialPosition = new THREE.Vector3().copy(
+    posterMesh.position
+  );
+  posterMesh.userData.initialRotation = new THREE.Euler().copy(
+    posterMesh.rotation
+  );
+
+  const hoverDims = size.clone();
+  hoverDims.setComponent(widthAxis, size.getComponent(widthAxis) * 1.04);
+  hoverDims.setComponent(heightAxis, size.y * 1.04);
+  hoverDims.setComponent(thicknessAxis, size.getComponent(thicknessAxis) + 0.4);
+
+  const posterHoverHitbox = new THREE.Mesh(
+    new THREE.BoxGeometry(hoverDims.x, hoverDims.y, hoverDims.z),
+    hitboxMaterial
+  );
+  posterHoverHitbox.name = "NeonPosterWhole_Hover_Pointer";
+  posterHoverHitbox.position.copy(center);
+  posterHoverHitbox.userData.originalObject = posterMesh;
+  scene.add(posterHoverHitbox);
+  raycasterObjects.push(posterHoverHitbox);
+  hitboxToObjectMap.set(posterHoverHitbox, posterMesh);
+
   console.info("[portfolio] Poster neón interactivo montado");
+}
+
+/** Efecto hover-agrandar (mismo esquema de los objetos originales: hitbox
+ * estático *_Hover_*, se escala la malla real) para los decorativos. */
+function addDecorHoverEffects() {
+  const decorMeshNames = [
+    "perro_second",
+    "balon_second",
+    // El casco de moto (junto al balón, al frente de la cama) se exportó
+    // con el nombre de su material: material.005 -> material005.
+    "material005",
+  ];
+
+  decorMeshNames.forEach((meshName) => {
+    let mesh = null;
+    scene.traverse((object) => {
+      // Puede ser Mesh o un grupo contenedor (p. ej. balon_second es un nodo).
+      if (!mesh && object.name.includes(meshName)) {
+        mesh = object;
+      }
+    });
+
+    if (!mesh) {
+      console.warn(`[portfolio] No se encontró ${meshName} para el hover`);
+      return;
+    }
+
+    const hitbox = createStaticHitbox(mesh);
+    if (hitbox === mesh) return;
+
+    hitbox.name = `${meshName}_Hover_Pointer`;
+    scene.add(hitbox);
+    raycasterObjects.push(hitbox);
+    hitboxToObjectMap.set(hitbox, mesh);
+  });
 }
 
 function handleRaycasterInteraction() {
@@ -2677,6 +3147,10 @@ function playHoverAnimation(objectHitbox, isHovering) {
 
   if (object.name.includes("Fish")) {
     scale = 1.2;
+  }
+
+  if (object.name.includes("poster8_third")) {
+    scale = 1.15;
   }
 
   if (isHovering) {
@@ -2789,10 +3263,8 @@ const soundOffSvg = document.querySelector(".sound-off-svg");
 const soundOnSvg = document.querySelector(".sound-on-svg");
 
 const updateMuteState = (muted) => {
-  if (muted) {
-    backgroundMusic.volume(0);
-  } else {
-    backgroundMusic.volume(BACKGROUND_MUSIC_VOLUME);
+  if (currentMusic) {
+    currentMusic.volume(musicTargetVolume());
   }
 
   buttonSounds.click.mute(muted);
@@ -2808,9 +3280,7 @@ const handleMuteToggle = (e) => {
   updateMuteState(isMuted);
   buttonSounds.click.play();
 
-  if (!backgroundMusic.playing()) {
-    backgroundMusic.play();
-  }
+  startBackgroundMusic();
 
   gsap.to(muteToggleButton, {
     rotate: -45,
@@ -3109,18 +3579,30 @@ const render = (timestamp) => {
     if (currentIntersects.length > 0) {
       const currentIntersectObject = currentIntersects[0].object;
 
-      if (currentIntersectObject.name.includes("Hover")) {
-        if (currentIntersectObject !== currentHoveredObject) {
-          if (currentHoveredObject) {
-            playHoverAnimation(currentHoveredObject, false);
-          }
+      // El hover puede estar "debajo" de las zonas de botones del poster:
+      // se busca el primer hitbox con nombre *_Hover_* en toda la pila.
+      const hoverHitbox =
+        currentIntersects.find((entry) =>
+          entry.object.name.includes("Hover")
+        )?.object ?? null;
 
-          currentHoveredObject = currentIntersectObject;
-          playHoverAnimation(currentIntersectObject, true);
+      if (hoverHitbox !== currentHoveredObject) {
+        if (currentHoveredObject) {
+          playHoverAnimation(currentHoveredObject, false);
+        }
+
+        if (hoverHitbox) {
+          currentHoveredObject = hoverHitbox;
+          playHoverAnimation(hoverHitbox, true);
+        } else {
+          currentHoveredObject = null;
         }
       }
 
-      if (currentIntersectObject.name.includes("Pointer")) {
+      if (
+        currentIntersectObject.name.includes("Pointer") ||
+        (hoverHitbox && hoverHitbox.name.includes("Pointer"))
+      ) {
         document.body.style.cursor = "pointer";
       } else {
         document.body.style.cursor = "default";
