@@ -6,7 +6,7 @@ export const SUPPORTED_LANGUAGES = ["es", "pt", "en"];
 // empieza por esa clave. Las claves con "$" son textos dinámicos de la UI.
 export const translations = {
   es: {
-    "$meta.title": "Victors Portfolio",
+    "$meta.title": "Victor's portfolio",
     "$meta.description":
       "Portafolio 3D interactivo de Victor. Explora su cuarto, descubre sus proyectos y ponte en contacto.",
     "$loading.loading": "Cargando...",
@@ -81,7 +81,7 @@ export const translations = {
   },
 
   pt: {
-    "$meta.title": "Victors Portfolio",
+    "$meta.title": "Victor's portfolio",
     "$meta.description":
       "Portfólio 3D interativo do Victor. Explore seu quarto, descubra seus projetos e entre em contato.",
     "$loading.loading": "Carregando...",
@@ -157,7 +157,7 @@ export const translations = {
   },
 
   en: {
-    "$meta.title": "Victors Portfolio",
+    "$meta.title": "Victor's portfolio",
     "$meta.description":
       "Victors Portfolio — an interactive 3D room portfolio.",
     "$loading.loading": "Loading...",
