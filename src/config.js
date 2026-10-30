@@ -58,23 +58,23 @@ export const UNBAKED_ORBIT_LIMITS = {
 // Luces de respaldo para el modo sin bake. El día/noche se anima por luces
 // porque todavía no existen las texturas horneadas.
 export const UNBAKED_LIGHTS = {
-  sunPosition: [19.4, 18.1, 12.8],
-  // Color de sol original del arte (crema cálido).
+  // Rig original del proyecto (commit inicial); ajústalo en vivo con el
+  // panel de debug de luces.
+  sunPosition: [18, 30, 12],
   sunColor: "#FFF1E0",
+  hemisphereGround: "#6B5B6E",
   lamp: {
+    // El cuarto cambió de sitio con el re-bake: la lámpara se reposicionó
+    // para seguir sobre el escritorio.
     position: [-21.4, 3.6, -52.9],
-    // Magenta puro pintaba las paredes de rosa; neon ultravioleta mantiene
-    // el glow sin virar a rosado.
-    color: UI_PALETTE.neonUltraviolet,
+    color: "#ff4ff3",
   },
   day: {
-    background: "#ADB4E4",
-    // Día: solo el sol, luz blanca neutra (sin lavado ambiental que subía
-    // el brillo y dejaba ver el tinte lavanda como rosado).
-    ambient: 0,
-    hemisphere: 0,
-    sun: 3.1,
-    lamp: 0,
+    background: "#d9cad1",
+    ambient: 0.9,
+    hemisphere: 0.9,
+    sun: 2.4,
+    lamp: 12,
   },
   night: {
     background: "#141228",

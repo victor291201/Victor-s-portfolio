@@ -245,7 +245,7 @@ const sizes = {
 };
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(UI_PALETTE.periwinkle);
+scene.background = new THREE.Color(UNBAKED_LIGHTS.day.background);
 
 const camera = new THREE.PerspectiveCamera(
   35,
@@ -270,7 +270,7 @@ if (!USE_BAKED_TEXTURES) {
   const ambientLight = new THREE.AmbientLight(0xffffff, day.ambient);
   const hemisphereLight = new THREE.HemisphereLight(
     0xffffff,
-    UI_PALETTE.slate,
+    UNBAKED_LIGHTS.hemisphereGround,
     day.hemisphere
   );
 
@@ -434,6 +434,31 @@ const setupCameraDebug = () => {
       text-align: center;
       opacity: 0.85;
     }
+    .camera-debug .cd-slider-row {
+      display: grid;
+      grid-template-columns: 86px 1fr 56px;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .camera-debug .cd-slider-row span {
+      opacity: 0.85;
+    }
+    .camera-debug .cd-color-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .camera-debug input[type="color"] {
+      width: 52px;
+      height: 22px;
+      padding: 0;
+      border: 1px solid rgba(173, 180, 228, 0.4);
+      border-radius: 4px;
+      background: transparent;
+    }
     .camera-debug input[type="range"] {
       width: 100%;
       accent-color: rgb(180, 60, 228);
@@ -594,6 +619,199 @@ const setupCameraDebug = () => {
     makeGroup("Luz escritorio", () => unbakedLighting.lamp.position);
   }
 
+  if (unbakedLighting) {
+    const applyLightingNow = () => {
+      const t = isNightMode ? UNBAKED_LIGHTS.night : UNBAKED_LIGHTS.day;
+      unbakedLighting.ambient.intensity = t.ambient;
+      unbakedLighting.hemisphere.intensity = t.hemisphere;
+      unbakedLighting.sun.intensity = t.sun;
+      unbakedLighting.lamp.intensity = t.lamp;
+    };
+
+    const makeSlider = (group, label, min, max, step, get, set) => {
+      const row = document.createElement("label");
+      row.className = "cd-slider-row";
+
+      const name = document.createElement("span");
+      name.textContent = label;
+
+      const range = document.createElement("input");
+      range.type = "range";
+      range.min = min;
+      range.max = max;
+      range.step = step;
+      range.value = get();
+
+      const num = document.createElement("input");
+      num.type = "number";
+      num.step = step;
+      num.value = fmt(get());
+
+      const setValue = (value) => {
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed)) return;
+        set(parsed);
+        range.value = parsed;
+        num.value = fmt(parsed);
+      };
+
+      range.addEventListener("input", () => setValue(range.value));
+      num.addEventListener("input", () => setValue(num.value));
+
+      row.append(name, range, num);
+      group.appendChild(row);
+    };
+
+    const makeColorRow = (group, label, get, set) => {
+      const row = document.createElement("label");
+      row.className = "cd-color-row";
+
+      const name = document.createElement("span");
+      name.textContent = label;
+
+      const input = document.createElement("input");
+      input.type = "color";
+      input.value = get();
+      input.addEventListener("input", () => set(input.value));
+
+      row.append(name, input);
+      group.appendChild(row);
+    };
+
+    const addIntensityGroup = (headingText, theme) => {
+      const group = document.createElement("div");
+      group.className = "cd-group";
+      const heading = document.createElement("div");
+      heading.className = "cd-group-title";
+      heading.textContent = headingText;
+      group.appendChild(heading);
+      [
+        ["ambient", 0, 2],
+        ["hemisphere", 0, 2],
+        ["sun", 0, 8],
+        ["lamp", 0, 120],
+      ].forEach(([key, min, max]) => {
+        makeSlider(
+          group,
+          key,
+          min,
+          max,
+          0.01,
+          () => theme[key],
+          (value) => {
+            theme[key] = value;
+            applyLightingNow();
+          }
+        );
+      });
+      panel.appendChild(group);
+    };
+
+    addIntensityGroup("Intensidades · día", UNBAKED_LIGHTS.day);
+    addIntensityGroup("Intensidades · noche", UNBAKED_LIGHTS.night);
+
+    const colorGroup = document.createElement("div");
+    colorGroup.className = "cd-group";
+    const colorHeading = document.createElement("div");
+    colorHeading.className = "cd-group-title";
+    colorHeading.textContent = "Colores";
+    colorGroup.appendChild(colorHeading);
+
+    makeColorRow(colorGroup, "sol", () => UNBAKED_LIGHTS.sunColor, (value) => {
+      UNBAKED_LIGHTS.sunColor = value;
+      unbakedLighting.sun.color.set(value);
+    });
+    makeColorRow(
+      colorGroup,
+      "lámpara",
+      () => UNBAKED_LIGHTS.lamp.color,
+      (value) => {
+        UNBAKED_LIGHTS.lamp.color = value;
+        unbakedLighting.lamp.color.set(value);
+      }
+    );
+    makeColorRow(
+      colorGroup,
+      "fondo día",
+      () => UNBAKED_LIGHTS.day.background,
+      (value) => {
+        UNBAKED_LIGHTS.day.background = value;
+        if (!isNightMode) scene.background.set(value);
+      }
+    );
+    makeColorRow(
+      colorGroup,
+      "fondo noche",
+      () => UNBAKED_LIGHTS.night.background,
+      (value) => {
+        UNBAKED_LIGHTS.night.background = value;
+        if (isNightMode) scene.background.set(value);
+      }
+    );
+    panel.appendChild(colorGroup);
+
+    const renderGroup = document.createElement("div");
+    renderGroup.className = "cd-group";
+    const renderHeading = document.createElement("div");
+    renderHeading.className = "cd-group-title";
+    renderHeading.textContent = "Render";
+    renderGroup.appendChild(renderHeading);
+    makeSlider(
+      renderGroup,
+      "exposure",
+      0.2,
+      2.5,
+      0.01,
+      () => renderer.toneMappingExposure,
+      (value) => {
+        renderer.toneMappingExposure = value;
+      }
+    );
+    panel.appendChild(renderGroup);
+
+    const lightsActions = document.createElement("div");
+    lightsActions.className = "cd-actions";
+    const copyLightsBtn = document.createElement("button");
+    copyLightsBtn.type = "button";
+    copyLightsBtn.textContent = "Copiar luces";
+    copyLightsBtn.addEventListener("click", async () => {
+      const sp = unbakedLighting.sun.position;
+      const lp = unbakedLighting.lamp.position;
+      const themeLines = (t) =>
+        `  {\n` +
+        `    background: "${t.background}",\n` +
+        `    ambient: ${fmt(t.ambient)},\n` +
+        `    hemisphere: ${fmt(t.hemisphere)},\n` +
+        `    sun: ${fmt(t.sun)},\n` +
+        `    lamp: ${fmt(t.lamp)},\n` +
+        `  }`;
+      const snippet =
+        `export const UNBAKED_LIGHTS = {\n` +
+        `  sunPosition: [${fmt(sp.x)}, ${fmt(sp.y)}, ${fmt(sp.z)}],\n` +
+        `  sunColor: "${UNBAKED_LIGHTS.sunColor}",\n` +
+        `  hemisphereGround: "${UNBAKED_LIGHTS.hemisphereGround}",\n` +
+        `  lamp: {\n` +
+        `    position: [${fmt(lp.x)}, ${fmt(lp.y)}, ${fmt(lp.z)}],\n` +
+        `    color: "${UNBAKED_LIGHTS.lamp.color}",\n` +
+        `  },\n` +
+        `  day: ${themeLines(UNBAKED_LIGHTS.day)},\n` +
+        `  night: ${themeLines(UNBAKED_LIGHTS.night)},\n` +
+        `};`;
+      try {
+        await navigator.clipboard.writeText(snippet);
+        copyLightsBtn.textContent = "¡Copiado!";
+      } catch (error) {
+        copyLightsBtn.textContent = "Mira la consola";
+      }
+      console.log(snippet);
+      window.setTimeout(() => {
+        copyLightsBtn.textContent = "Copiar luces";
+      }, 1500);
+    });
+    lightsActions.appendChild(copyLightsBtn);
+    panel.appendChild(lightsActions);
+  }
+
   const autoBtn = document.createElement("button");
   autoBtn.type = "button";
   autoBtn.textContent = "Auto diagonal";
@@ -731,7 +949,7 @@ const setupCameraDebug = () => {
   cameraDebugUpdate(true);
 };
 
-const ENABLE_CAMERA_DEBUG = false;
+const ENABLE_CAMERA_DEBUG = true;
 
 if (import.meta.env.DEV && ENABLE_CAMERA_DEBUG) {
   setupCameraDebug();
@@ -2271,6 +2489,104 @@ function createDelayedHitboxes() {
   });
 
   objectsNeedingHitboxes.length = 0;
+
+  createNeonPosterButtons();
+}
+
+/** Neón poster (antes blank poster8_third.001): textura emissive + 3 zonas
+ * clickables que abren los modales vía las rutas *_Button_* existentes. */
+let neonPosterCreated = false;
+
+function createNeonPosterButtons() {
+  if (neonPosterCreated) return;
+  neonPosterCreated = true;
+
+  let posterMesh = null;
+  scene.traverse((object) => {
+    if (
+      object.name === "poster8_third.001" ||
+      object.name === "poster8_third001"
+    ) {
+      posterMesh = object;
+    }
+  });
+
+  if (!posterMesh) {
+    console.warn("[portfolio] No se encontró el poster vacío (poster8_third.001)");
+    return;
+  }
+
+  const posterTexture = textureLoader.load("/images/poster_neon.jpg");
+  posterTexture.colorSpace = THREE.SRGBColorSpace;
+  posterTexture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  // Convención glTF del resto de posters: sin flip vertical.
+  posterTexture.flipY = false;
+
+  const posterMaterial = new THREE.MeshStandardMaterial({
+    map: posterTexture,
+    roughness: 0.85,
+    metalness: 0,
+    emissive: new THREE.Color(0xffffff),
+    emissiveMap: posterTexture,
+    emissiveIntensity: 0.8,
+  });
+  posterMesh.traverse((node) => {
+    if (node.isMesh) {
+      node.material = posterMaterial;
+      node.castShadow = false;
+      node.receiveShadow = false;
+    }
+  });
+
+  const bounds = new THREE.Box3().setFromObject(posterMesh);
+  const size = bounds.getSize(new THREE.Vector3());
+  const center = bounds.getCenter(new THREE.Vector3());
+
+  if (size.y <= Math.min(size.x, size.z)) {
+    console.warn("[portfolio] El poster no es vertical; sin botones");
+    return;
+  }
+
+  const thicknessAxis = size.x <= size.z ? 0 : 2;
+  const widthAxis = thicknessAxis === 0 ? 2 : 0;
+  const heightAxis = 1;
+
+  const hitboxMaterial = new THREE.MeshBasicMaterial({
+    transparent: true,
+    opacity: 0,
+    visible: false,
+  });
+
+  // Centros verticales (desde el borde inferior) de los 3 botones del arte
+  // de 682x961: TRABAJO y=522, ACERCA y=660, CONTACTO y=782.
+  [
+    { name: "NeonPosterWork_Button_Pointer", frac: 0.457 },
+    { name: "NeonPosterAbout_Button_Pointer", frac: 0.313 },
+    { name: "NeonPosterContact_Button_Pointer", frac: 0.186 },
+  ].forEach(({ name, frac }) => {
+    const dims = size.clone();
+    dims.setComponent(widthAxis, size.getComponent(widthAxis) * 0.72);
+    dims.setComponent(heightAxis, size.y * 0.125);
+    dims.setComponent(thicknessAxis, size.getComponent(thicknessAxis) + 0.6);
+
+    const hitbox = new THREE.Mesh(
+      new THREE.BoxGeometry(dims.x, dims.y, dims.z),
+      hitboxMaterial
+    );
+    hitbox.name = name;
+    hitbox.position.set(
+      center.x,
+      bounds.min.y + size.y * frac,
+      center.z
+    );
+    hitbox.userData.originalObject = hitbox;
+
+    scene.add(hitbox);
+    raycasterObjects.push(hitbox);
+    hitboxToObjectMap.set(hitbox, hitbox);
+  });
+
+  console.info("[portfolio] Poster neón interactivo montado");
 }
 
 function handleRaycasterInteraction() {

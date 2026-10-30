@@ -149,7 +149,8 @@ The render mode is selected in `src/config.js` via `RENDER_MODE`:
   - **unbaked**: `animateUnbakedTheme()` lerps the real-time light intensities + `scene.background` between `UNBAKED_LIGHTS.day` and `.night`.
 - Toggle button animates over 1.5s with GSAP.
 - CSS theming switches `.light-theme` / `.dark-theme` classes on `<body>`. Interface colors come from CSS custom properties defined per theme in `style.scss` (`--ui-*`): day uses the canonical palette, night uses the neon tokens with glow (`--ui-glow`, `--ui-panel-shadow`, `neon-panel-pulse`/`neon-title-flicker` keyframes). Never hardcode hex in component rules — consume the variables.
-- Favicon is fixed ("V") — `toggleFavicons()` is a no-op.
+- Favicon is fixed ("V") — `toggleFavicons()` is no-op.
+- **Lighting/camera debug panel** (`setupCameraDebug`, enabled via `ENABLE_CAMERA_DEBUG` in dev only): sliders for camera, sun & lamp position, day/night intensities, sun/lamp/background colors, exposure. "Copiar luces" outputs the `UNBAKED_LIGHTS` snippet to paste back into `config.js`. The sun rig uses the project's original values (`sunPosition [18, 30, 12]`, `sunColor #FFF1E0`, day `0.9/0.9/2.4/12`).
 
 ### 5. Audio
 - Background music: `.ogg` (known iPhone/Safari compatibility issue — see Known Issues).
