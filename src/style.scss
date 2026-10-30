@@ -814,8 +814,9 @@ ul {
   }
 }
 
-// Show/hide page controls (language, mute, theme).
+// Show/hide the dev camera & lighting debug panel.
 .ui-toggle-button {
+  display: none;
   position: fixed;
   top: 36px;
   left: 50%;

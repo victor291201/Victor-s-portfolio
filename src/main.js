@@ -1074,7 +1074,7 @@ const setupCameraDebug = () => {
   cameraDebugUpdate(true);
 };
 
-const ENABLE_CAMERA_DEBUG = true;
+const ENABLE_CAMERA_DEBUG = false;
 
 if (import.meta.env.DEV && ENABLE_CAMERA_DEBUG) {
   setupCameraDebug();
