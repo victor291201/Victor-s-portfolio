@@ -74,7 +74,7 @@ export const UNBAKED_LIGHTS = {
     ambient: 0.9,
     hemisphere: 0.9,
     sun: 2.4,
-    lamp: 12,
+    lamp: 0,
   },
   night: {
     background: "#141228",

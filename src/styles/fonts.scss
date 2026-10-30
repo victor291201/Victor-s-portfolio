@@ -9,6 +9,19 @@
   font-display: swap;
 }
 
+// Shifty Notes (body font) is a demo build: every digit glyph is replaced by
+// the same "demo" watermark. Reuse Motley Forces for numerals only, so numbers
+// inside body copy render correctly while the rest keeps the body typeface.
+@font-face {
+  font-family: #{vars.$font-numerals};
+  src: url("/fonts/MotleyForces-Regular.woff2") format("woff2"),
+    url("/fonts/MotleyForces-Regular.woff") format("woff");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
 @font-face {
   font-family: #{vars.$font-display};
   src: url("/fonts/MotleyForces-Regular.woff2") format("woff2"),

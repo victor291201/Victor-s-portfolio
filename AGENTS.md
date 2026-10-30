@@ -210,6 +210,7 @@ blender -b "blender files/Baking.blend" --python "blender files/export_unbaked.p
 - Camera starts at different positions depending on screen width (mobile vs desktop).
 - `camera.near = 0.1`, `camera.far = 200`.
 - Renderer pixel ratio capped at 2.
+- Shifty Notes is a demo build: every digit glyph is a "demo" watermark. `$font-numerals` (`Motley Forces Numerals`, `unicode-range: U+0030-0039`) reuses Motley Forces for digits, and `p`/`ul`/`li` stack it before `--font-body`. Keep that alias for any new numeric body text.
 - The `window.open()` for social links (line 1689) opens an empty window and sets location — this triggers popup blockers in some browsers.
 
 ## Testing

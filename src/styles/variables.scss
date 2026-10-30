@@ -24,6 +24,9 @@ $color-neon-ultraviolet: #7f00ff;
 // Fonts
 $font-display: "Motley Forces"; // h1/h2, buttons, titles
 $font-body: "Shifty Notes";     // paragraphs, lists, instructions
+// Shifty Notes is a demo build whose digit glyphs render as "demo".
+// This alias reuses Motley Forces for numerals only (unicode-range).
+$font-numerals: "Motley Forces Numerals";
 
 // Returns "r g b" channels of a color, so CSS can do:
 // rgb(var(--color-violet-rgb) / 0.75)

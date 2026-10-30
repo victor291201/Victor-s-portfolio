@@ -44,6 +44,7 @@
   // Fonts
   --font-display: #{vars.$font-display};
   --font-body: #{vars.$font-body};
+  --font-numerals: #{vars.$font-numerals};
 }
 
 // ============================================================
@@ -240,7 +241,7 @@ h2 {
 p,
 ul,
 li {
-  font-family: var(--font-body);
+  font-family: var(--font-numerals), var(--font-body);
 }
 
 ul {
@@ -361,6 +362,10 @@ ul {
 
 .contact {
   max-width: 500px;
+
+  @include media.media("<=tablet") {
+    padding: 20px;
+  }
 }
 
 .modal-wrapper {
@@ -564,8 +569,26 @@ ul {
 
 .contact-button-wrapper {
   @include vars.centered;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px 28px;
+  width: 100%;
+  max-width: 100%;
   margin-top: 24px;
-  justify-content: space-between;
+
+  @include media.media("<=tablet") {
+    gap: 12px 18px;
+
+    .contact-svg {
+      width: 46px;
+      height: 46px;
+    }
+
+    .mail {
+      width: 52px;
+      height: 52px;
+    }
+  }
 }
 
 .contact-svg {
